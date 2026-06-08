@@ -1,12 +1,17 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calendario Pro</title>
+<title>Calendario Escolar PRO</title>
 
 <style>
-body{font-family:Arial;margin:0;background:#f2f4f8}
+body{
+font-family:Arial;
+margin:0;
+background:#f2f4f8;
+}
 
 header{
 background:#fff;
@@ -16,7 +21,10 @@ justify-content:space-between;
 align-items:center;
 }
 
-.menu{font-size:24px;cursor:pointer}
+.menu{
+font-size:24px;
+cursor:pointer;
+}
 
 .sidebar{
 position:fixed;
@@ -32,21 +40,16 @@ overflow:auto;
 
 .sidebar.open{left:0}
 
-.page{
+input,select,button{
+width:100%;
 padding:10px;
-}
-
-.card{
-background:#fff;
-padding:10px;
-margin:10px 0;
-border-radius:10px;
-cursor:pointer;
+margin-top:8px;
+box-sizing:border-box;
 }
 
 .evento{
 background:#fff;
-margin:10px 0;
+margin:10px;
 padding:10px;
 border-radius:10px;
 position:relative;
@@ -56,22 +59,14 @@ position:relative;
 .amarillo{border-left:5px solid orange}
 .verde{border-left:5px solid green}
 
-button{
-padding:8px;
-margin-top:5px;
-width:100%;
-}
-
-.smallBtn{
+button.small{
 width:auto;
 position:absolute;
 top:10px;
 }
 
-.del{right:10px}
 .edit{right:60px}
-
-.hidden{display:none}
+.del{right:10px}
 </style>
 </head>
 
@@ -79,13 +74,13 @@ top:10px;
 
 <header>
 <div class="menu" onclick="toggleMenu()">☰</div>
-<h3>📚 Calendario Pro</h3>
+<h3>📚 Calendario PRO</h3>
 </header>
 
 <!-- MENU -->
 <div class="sidebar" id="menu">
 
-<input id="search" placeholder="🔍 Buscar materia" oninput="renderMaterias()">
+<input id="buscador" placeholder="🔍 Buscar materia" oninput="renderMaterias()">
 
 <hr>
 
@@ -93,224 +88,191 @@ top:10px;
 
 <hr>
 
-<button onclick="show('home')">🏠 Inicio</button>
-<button onclick="show('events')">📅 Eventos</button>
-
-</div>
-
-<!-- HOME -->
-<div class="page" id="home">
-
-<h3>⭐ Dashboard</h3>
-
-<div id="stats"></div>
-
-</div>
-
-<!-- EVENTS -->
-<div class="page hidden" id="events">
-
-<h3>📅 Eventos</h3>
-
-<div id="lista"></div>
-
-</div>
-
-<!-- MATERIA -->
-<div class="page hidden" id="materiaPage">
-
-<h3 id="materiaTitle"></h3>
-
-<div id="materiaContent"></div>
+<button onclick="filtro='todos';render()">Todas</button>
+<button onclick="filtro='tarea';render()">Tareas</button>
+<button onclick="filtro='examen';render()">Exámenes</button>
+<button onclick="filtro='tp';render()">TP</button>
+<button onclick="filtro='expo';render()">Exposiciones</button>
 
 </div>
 
 <!-- FORM -->
-<div class="page">
-
-<h3>➕ Agregar</h3>
-
-<input id="nombre" placeholder="Nombre">
-<input id="materia" placeholder="Materia">
-<input type="date" id="fecha">
+<form id="form">
+<input id="nombre" placeholder="Nombre" required>
+<input id="materia" placeholder="Materia" required>
+<input type="date" id="fecha" required>
 
 <select id="tipo">
 <option value="tarea">Tarea</option>
 <option value="examen">Examen</option>
-<option value="tp">TP</option>
+<option value="tp">Trabajo práctico</option>
 <option value="expo">Exposición</option>
 </select>
 
-<button onclick="add()">Agregar</button>
+<button>Agregar</button>
+</form>
 
-</div>
+<div id="lista"></div>
 
 <script>
 
+// =======================
+// DATOS
+// =======================
 let eventos = JSON.parse(localStorage.getItem("eventos")) || [];
 let filtro = "todos";
 
-// SAVE
+// =======================
+// GUARDAR
+// =======================
 function save(){
-localStorage.setItem("eventos",JSON.stringify(eventos));
+localStorage.setItem("eventos", JSON.stringify(eventos));
 }
 
+// =======================
 // DIAS
-function dias(f){
-let h=new Date();h.setHours(0,0,0,0);
-let d=new Date(f);d.setHours(0,0,0,0);
-return Math.ceil((d-h)/86400000);
+// =======================
+function dias(fecha){
+let hoy = new Date();
+hoy.setHours(0,0,0,0);
+
+let f = new Date(fecha);
+f.setHours(0,0,0,0);
+
+return Math.ceil((f - hoy)/86400000);
 }
 
+// =======================
 // COLOR
+// =======================
 function color(d){
-if(d<=5)return"rojo";
-if(d<=10)return"amarillo";
-return"verde";
+if(d <= 5) return "rojo";
+if(d <= 10) return "amarillo";
+return "verde";
 }
 
-// NAV PAGES
-function show(p){
-home.classList.add("hidden");
-events.classList.add("hidden");
-materiaPage.classList.add("hidden");
-
-if(p=="home")home.classList.remove("hidden");
-if(p=="events")events.classList.remove("hidden");
-}
-
-// ADD
-function add(){
-
-eventos.push({
-nombre:nombre.value,
-materia:materia.value,
-fecha:fecha.value,
-tipo:tipo.value,
-temas:"",
-plan:""
-});
-
-nombre.value="";
-materia.value="";
-fecha.value="";
-
-render();
-}
-
-// RENDER EVENTS
+// =======================
+// RENDER PRINCIPAL
+// =======================
 function render(){
+
+let lista = document.getElementById("lista");
+lista.innerHTML = "";
 
 eventos.sort((a,b)=>dias(a.fecha)-dias(b.fecha));
 
-lista.innerHTML="";
-
-let tareas = 0;
-let examenes = 0;
-
 eventos.forEach((e,i)=>{
 
-if(e.tipo=="tarea")tareas++;
-if(e.tipo=="examen")examenes++;
+if(filtro !== "todos" && filtro !== e.tipo) return;
 
-let d=dias(e.fecha);
+let d = dias(e.fecha);
 
-lista.innerHTML+=`
+lista.innerHTML += `
 <div class="evento ${color(d)}">
-
-<b onclick="openMateria('${e.materia}')">${e.nombre}</b><br>
+<b>${e.nombre}</b><br>
 📚 ${e.materia}<br>
 📅 ${e.fecha}<br>
-${d==0?"🔥 ES HOY":"⏳ "+d+" días"}
+${d === 0 ? "🔥 ES HOY" : "⏳ " + d + " días"}
 
-<button class="smallBtn edit" onclick="edit(${i})">✏️</button>
-<button class="smallBtn del" onclick="del(${i})">🗑️</button>
-
+<button class="small edit" onclick="edit(${i})">✏️</button>
+<button class="small del" onclick="del(${i})">🗑️</button>
 </div>`;
 });
-
-stats.innerHTML=`
-📊 Total: ${eventos.length}<br>
-📝 Tareas: ${tareas}<br>
-📖 Exámenes: ${examenes}
-`;
 
 save();
 renderMaterias();
 }
 
-// DELETE
+// =======================
+// AGREGAR
+// =======================
+document.getElementById("form").addEventListener("submit", e=>{
+e.preventDefault();
+
+eventos.push({
+nombre:nombre.value,
+materia:materia.value,
+fecha:fecha.value,
+tipo:tipo.value
+});
+
+form.reset();
+render();
+});
+
+// =======================
+// ELIMINAR
+// =======================
 function del(i){
 eventos.splice(i,1);
 render();
 }
 
-// EDIT
+// =======================
+// EDITAR
+// =======================
 function edit(i){
 
-let n=prompt("Nombre:",eventos[i].nombre);
-let f=prompt("Fecha:",eventos[i].fecha);
+let n = prompt("Nombre:", eventos[i].nombre);
+let f = prompt("Fecha (AAAA-MM-DD):", eventos[i].fecha);
 
-if(n)eventos[i].nombre=n;
-if(f)eventos[i].fecha=f;
+if(n) eventos[i].nombre = n;
+if(f) eventos[i].fecha = f;
 
 render();
 }
 
+// =======================
 // MENU
+// =======================
 function toggleMenu(){
-menu.classList.toggle("open");
+document.getElementById("menu").classList.toggle("open");
 }
 
-// MATERIAS LIST
+// =======================
+// MATERIAS
+// =======================
 function renderMaterias(){
 
-let q=search.value.toLowerCase();
+let q = document.getElementById("buscador").value.toLowerCase();
 
-let mats=[...new Set(eventos.map(e=>e.materia))];
+let mats = [...new Set(eventos.map(e=>e.materia))];
 
-materias.innerHTML="";
+let div = document.getElementById("materias");
+div.innerHTML = "";
 
 mats
 .filter(m=>m.toLowerCase().includes(q))
 .forEach(m=>{
-materias.innerHTML+=`
-<div class="card" onclick="openMateria('${m}')">
-📚 ${m}
-</div>`;
+div.innerHTML += `<button onclick="ver('${m}')">${m}</button>`;
 });
 }
 
-// OPEN MATERIA (NIVEL PRO REAL)
-function openMateria(m){
+// =======================
+// VER MATERIA
+// =======================
+function ver(m){
 
-show("materiaPage");
+let data = eventos.filter(e=>e.materia === m);
 
-materiaTitle.innerText="📚 "+m;
+let txt = "📚 " + m + "\n\n";
 
-let list = eventos.filter(e=>e.materia===m);
+data.forEach(e=>{
+txt += `
+📖 ${e.nombre}
+📅 ${e.fecha}
+Tipo: ${e.tipo}
 
-materiaContent.innerHTML="";
-
-list.forEach(e=>{
-
-materiaContent.innerHTML+=`
-<div class="card">
-
-<b>${e.nombre}</b><br>
-📅 ${e.fecha}<br>
-
-🧠 Temas:<br>
-${e.temas || "Sin temas"}<br><br>
-
-📅 Plan de estudio:<br>
-${e.plan || "Sin plan"}
-
-</div>`;
+-------------------
+`;
 });
+
+alert(txt);
 }
 
+// =======================
 // INIT
+// =======================
 render();
 
 </script>
