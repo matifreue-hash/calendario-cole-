@@ -1,28 +1,44 @@
 
 
 
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calendario Escolar</title>
+<title>Calendario Escolar Pro</title>
 
 <style>
 body{
     font-family: Arial;
     background:#f2f4f8;
     margin:0;
-    padding:20px;
+    padding:15px;
 }
 
-/* TOP BAR */
+/* SPLASH */
+#splash{
+    position:fixed;
+    inset:0;
+    background:#f2f4f8;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    animation:fade 2s forwards;
+    animation-delay:1.5s;
+}
+@keyframes fade{
+    to{opacity:0;visibility:hidden;}
+}
+
+/* TOPBAR */
 .topbar{
     display:flex;
-    align-items:center;
     justify-content:center;
+    align-items:center;
     position:relative;
-    margin-bottom:15px;
+    margin-top:50px;
 }
 
 .topbar h1{
@@ -33,13 +49,60 @@ body{
 .menu-btn{
     position:absolute;
     left:0;
-    top:50%;
-    transform:translateY(-50%);
     font-size:24px;
-    background:white;
     border:none;
-    border-radius:8px;
+    background:white;
     padding:8px 12px;
+    border-radius:8px;
+}
+
+/* FORM */
+form{
+    background:white;
+    padding:10px;
+    border-radius:10px;
+    margin:10px 0;
+}
+
+input,button{
+    width:100%;
+    padding:10px;
+    margin-top:6px;
+    box-sizing:border-box;
+}
+
+/* EVENTOS */
+.evento{
+    margin-top:10px;
+    padding:12px;
+    border-radius:10px;
+    position:relative;
+    font-weight:bold;
+}
+
+.rojo{background:#ffd6d6;}
+.amarillo{background:#fff4c2;}
+.verde{background:#d6ffd6;}
+
+.edit{
+    position:absolute;
+    right:45px;
+    top:10px;
+    background:#eee;
+    border:none;
+    padding:5px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.delete{
+    position:absolute;
+    right:10px;
+    top:10px;
+    background:#ffdddd;
+    border:none;
+    padding:5px;
+    border-radius:6px;
     cursor:pointer;
 }
 
@@ -51,42 +114,22 @@ body{
     width:240px;
     height:100%;
     background:white;
-    box-shadow:2px 0 10px rgba(0,0,0,0.2);
+    box-shadow:2px 0 10px rgba(0,0,0,0.3);
     padding:15px;
     transition:0.3s;
-    z-index:1002;
+    z-index:3000;
 }
 
 .menu.open{left:0;}
 
-.overlay{
+#overlay{
     position:fixed;
-    top:0;left:0;
-    width:100%;height:100%;
+    inset:0;
     background:rgba(0,0,0,0.4);
     display:none;
-    z-index:1000;
+    z-index:2500;
 }
-
-.overlay.show{display:block;}
-
-button{
-    width:100%;
-    margin-top:8px;
-    padding:10px;
-}
-
-/* COLORES */
-.rojo{background:#ffd6d6;}
-.amarillo{background:#fff4c2;}
-.verde{background:#d6ffd6;}
-
-.evento{
-    margin-top:10px;
-    padding:10px;
-    border-radius:10px;
-    font-weight:bold;
-}
+#overlay.show{display:block;}
 
 /* CALENDARIO */
 #calendario{
@@ -98,10 +141,10 @@ button{
 
 .dia{
     background:white;
-    padding:6px;
-    border-radius:6px;
     min-height:50px;
+    padding:6px;
     font-size:12px;
+    border-radius:6px;
 }
 
 .evento-mini{
@@ -112,7 +155,7 @@ button{
     padding:2px;
 }
 
-/* VOLUMEN */
+/* VOL */
 input[type=range]{
     width:100%;
 }
@@ -121,16 +164,21 @@ input[type=range]{
 
 <body>
 
-<!-- TOP BAR -->
+<!-- SPLASH -->
+<div id="splash">
+    <h1>📚 Calendario Escolar</h1>
+</div>
+
+<!-- TOPBAR -->
 <div class="topbar">
-    <button id="menuBtn" class="menu-btn">☰</button>
+    <button class="menu-btn" id="menuBtn">☰</button>
     <h1>📚 Calendario Escolar</h1>
 </div>
 
 <!-- MENU -->
-<div id="overlay" class="overlay"></div>
+<div id="overlay"></div>
 
-<div id="menu" class="menu">
+<div class="menu" id="menu">
 
     <h3>📂 Filtros</h3>
     <button onclick="filtrar('todos')">Todos</button>
@@ -141,11 +189,10 @@ input[type=range]{
     <hr>
 
     <h3>🎵 Música</h3>
-    <button onclick="toggleMusica()">▶ Activar música</button>
+    <button onclick="toggleMusica()">▶ Música</button>
 
     <label>Volumen</label>
-    <input type="range" min="0" max="1" step="0.1"
-    id="volumen">
+    <input type="range" id="volumen" min="0" max="1" step="0.1">
 
 </div>
 
@@ -156,16 +203,13 @@ input[type=range]{
     <button>Agregar</button>
 </form>
 
-<!-- LISTA -->
 <div id="lista"></div>
 
-<!-- CALENDARIO -->
-<h2>📅 Calendario</h2>
+<h3>📅 Calendario</h3>
 <div id="calendario"></div>
 
-<!-- AUDIO -->
 <audio id="musica" loop>
-    <source src="https://cdn.pixabay.com/download/audio/2022/10/16/audio_7c8b1c1c7d.mp3?filename=soft-piano-ambient-118602.mp3">
+    <source src="https://cdn.pixabay.com/download/audio/2022/10/16/audio_7c8b1c1c7d.mp3">
 </audio>
 
 <script>
@@ -198,17 +242,14 @@ function filtrar(f){
 }
 
 /* DIAS */
-function diasFaltan(fecha){
+function diasFaltan(f){
     const hoy = new Date();
     hoy.setHours(0,0,0,0);
-
-    const e = new Date(fecha);
+    const e = new Date(f);
     e.setHours(0,0,0,0);
-
     return Math.ceil((e-hoy)/(1000*60*60*24));
 }
 
-/* COLOR */
 function color(d){
     if(d<=5) return "rojo";
     if(d<=10) return "amarillo";
@@ -230,18 +271,32 @@ function mostrar(){
 
         if(filtro!=="todos" && filtro!==c) return;
 
-        let texto = d===0 ? "🔥 Hoy" : `⏳ ${d} días`;
-
         lista.innerHTML += `
         <div class="evento ${c}">
             ${e.nombre}<br>
             📅 ${e.fecha}<br>
-            ${texto}
+            ⏳ ${d} días
+
+            <button class="edit" onclick="editar(${i})">✏️</button>
+            <button class="delete" onclick="eliminar(${i})">❌</button>
         </div>`;
     });
 
     guardar();
     renderCalendario();
+}
+
+/* EDITAR */
+function editar(i){
+    let n = prompt("Editar:", eventos[i].nombre);
+    if(n) eventos[i].nombre = n;
+    mostrar();
+}
+
+/* ELIMINAR */
+function eliminar(i){
+    eventos.splice(i,1);
+    mostrar();
 }
 
 /* GUARDAR */
@@ -252,15 +307,12 @@ function guardar(){
 /* FORM */
 document.getElementById("form").addEventListener("submit",e=>{
     e.preventDefault();
-
     eventos.push({
         nombre:nombre.value,
         fecha:fecha.value
     });
-
     nombre.value="";
     fecha.value="";
-
     mostrar();
 });
 
@@ -275,13 +327,13 @@ function renderCalendario(){
     const año = hoy.getFullYear();
 
     const primer = new Date(año,mes,1).getDay();
-    const diasMes = new Date(año,mes+1,0).getDate();
+    const dias = new Date(año,mes+1,0).getDate();
 
     for(let i=0;i<primer;i++){
         cont.innerHTML += `<div class="dia"></div>`;
     }
 
-    for(let d=1; d<=diasMes; d++){
+    for(let d=1;d<=dias;d++){
 
         let fecha = `${año}-${String(mes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
 
@@ -303,11 +355,11 @@ document.getElementById("volumen").addEventListener("input",(e)=>{
 });
 
 function toggleMusica(){
-    musica.volume = document.getElementById("volumen").value || 0.3;
+    musica.volume = 0.3;
     musica.play();
 }
 
-/* AUTOPLAY BLOQUEO */
+/* AUTOPLAY SAFE */
 document.addEventListener("click",()=>{
     musica.volume = 0.3;
     musica.play();
