@@ -1,63 +1,85 @@
 
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
-<head<link rel="manifest" href="manifest.json">
+<head>
+<link rel="manifest" href="manifest.json">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Calendario Escolar</title>
 
 <style>
-body {
-    font-family: Arial;
-    background: #f2f4f8;
-    margin: 0;
-    padding: 20px;
+body{
+    font-family: Arial, sans-serif;
+    background:#f2f4f8;
+    margin:0;
+    padding:20px;
 }
 
-h1 {
-    text-align: center;
+h1{
+    text-align:center;
 }
 
-form {
-    background: white;
-    padding: 15px;
-    border-radius: 12px;
+form{
+    background:white;
+    padding:15px;
+    border-radius:12px;
+    margin-bottom:15px;
 }
 
-input, button {
-    width: 100%;
-    padding: 10px;
-    margin-top: 8px;
+input, button{
+    width:100%;
+    padding:10px;
+    margin-top:8px;
+    box-sizing:border-box;
 }
 
-.filtros {
-    display: flex;
-    gap: 5px;
-    margin: 10px 0;
+.filtros{
+    display:flex;
+    gap:5px;
+    margin:10px 0;
 }
 
-.filtros button {
-    flex: 1;
-    padding: 10px;
+.filtros button{
+    flex:1;
 }
 
-.evento {
-    margin-top: 12px;
-    padding: 15px;
-    border-radius: 12px;
-    font-weight: bold;
-    position: relative;
+.evento{
+    margin-top:12px;
+    padding:15px;
+    border-radius:12px;
+    font-weight:bold;
+    position:relative;
 }
 
-.rojo { background:#ffd6d6; border-left:6px solid red; }
-.amarillo { background:#fff4c2; border-left:6px solid orange; }
-.verde { background:#d6ffd6; border-left:6px solid green; }
+.rojo{
+    background:#ffd6d6;
+    border-left:6px solid red;
+}
 
-button.edit {
+.amarillo{
+    background:#fff4c2;
+    border-left:6px solid orange;
+}
+
+.verde{
+    background:#d6ffd6;
+    border-left:6px solid green;
+}
+
+button.edit{
     position:absolute;
     right:10px;
     top:10px;
     width:auto;
+}
+
+.punto-hoy{
+    display:inline-block;
+    width:12px;
+    height:12px;
+    background:black;
+    border-radius:50%;
+    margin-right:8px;
 }
 </style>
 </head>
@@ -67,102 +89,180 @@ button.edit {
 <h1>📚 Calendario Escolar</h1>
 
 <div class="filtros">
-<button onclick="filtrar('todos')">Todos</button>
-<button onclick="filtrar('rojo')">🔴</button>
-<button onclick="filtrar('amarillo')">🟡</button>
-<button onclick="filtrar('verde')">🟢</button>
+    <button onclick="filtrar('todos')">Todos</button>
+    <button onclick="filtrar('rojo')">🔴</button>
+    <button onclick="filtrar('amarillo')">🟡</button>
+    <button onclick="filtrar('verde')">🟢</button>
 </div>
 
 <form id="form">
-<input id="nombre" placeholder="Tarea o examen" required>
-<input type="date" id="fecha" required>
-<button>Agregar</button>
+    <input id="nombre" placeholder="Tarea o examen" required>
+    <input type="date" id="fecha" required>
+    <button type="submit">Agregar</button>
 </form>
 
 <div id="lista"></div>
 
 <script>
+
 let eventos = JSON.parse(localStorage.getItem("eventos")) || [];
 let filtro = "todos";
 
 function diasFaltan(fecha){
-    return Math.ceil((new Date(fecha)-new Date())/(1000*60*60*24));
+
+    const hoy = new Date();
+    hoy.setHours(0,0,0,0);
+
+    const evento = new Date(fecha);
+    evento.setHours(0,0,0,0);
+
+    return Math.ceil(
+        (evento - hoy) / (1000 * 60 * 60 * 24)
+    );
 }
 
-function color(d){
-    if(d<=5) return "rojo";
-    if(d<=10) return "amarillo";
+function formatearFecha(fecha){
+
+    const f = new Date(fecha + "T00:00:00");
+
+    return f.toLocaleDateString("es-AR");
+}
+
+function color(dias){
+
+    if(dias <= 5) return "rojo";
+    if(dias <= 10) return "amarillo";
+
     return "verde";
 }
 
 function guardar(){
-    localStorage.setItem("eventos", JSON.stringify(eventos));
+
+    localStorage.setItem(
+        "eventos",
+        JSON.stringify(eventos)
+    );
 }
 
 function limpiar(){
-    eventos = eventos.filter(e => diasFaltan(e.fecha) >= 0);
+
+    eventos = eventos.filter(
+        e => diasFaltan(e.fecha) >= 0
+    );
 }
 
 function mostrar(){
-    limpiar();
-    eventos.sort((a,b)=>diasFaltan(a.fecha)-diasFaltan(b.fecha));
 
-    let lista = document.getElementById("lista");
+    limpiar();
+
+    eventos.sort((a,b)=>
+        diasFaltan(a.fecha) -
+        diasFaltan(b.fecha)
+    );
+
+    let lista =
+        document.getElementById("lista");
+
     lista.innerHTML = "";
 
     eventos.forEach((e,i)=>{
-        let c = color(diasFaltan(e.fecha));
 
-        if(filtro!="todos" && filtro!=c) return;
+        let dias = diasFaltan(e.fecha);
+        let c = color(dias);
+
+        if(
+            filtro !== "todos" &&
+            filtro !== c
+        ){
+            return;
+        }
+
+        let punto = dias === 0
+            ? '<span class="punto-hoy"></span>'
+            : '';
+
+        let textoDias = dias === 0
+            ? '🔥 ¡Es hoy!'
+            : `⏳ Faltan ${dias} días`;
 
         lista.innerHTML += `
         <div class="evento ${c}">
-            ${e.nombre} <br>
-            Faltan ${diasFaltan(e.fecha)} días
+            ${punto}${e.nombre}<br>
+            📅 ${formatearFecha(e.fecha)}<br>
+            ${textoDias}
             <button class="edit" onclick="editar(${i})">✏️</button>
-        </div>`;
+        </div>
+        `;
     });
 
     guardar();
 }
 
 function editar(i){
-    let nuevo = prompt("Editar nombre:", eventos[i].nombre);
-    if(nuevo) eventos[i].nombre = nuevo;
-    mostrar();
+
+    let nuevo = prompt(
+        "Editar nombre:",
+        eventos[i].nombre
+    );
+
+    if(nuevo){
+
+        eventos[i].nombre = nuevo;
+
+        mostrar();
+    }
 }
 
 function filtrar(f){
+
     filtro = f;
+
     mostrar();
 }
 
-document.getElementById("form").addEventListener("submit", e=>{
+document
+.getElementById("form")
+.addEventListener("submit", e=>{
+
     e.preventDefault();
+
+    const nombre =
+        document.getElementById("nombre");
+
+    const fecha =
+        document.getElementById("fecha");
 
     eventos.push({
         nombre: nombre.value,
         fecha: fecha.value
     });
 
-    nombre.value="";
-    fecha.value="";
+    nombre.value = "";
+    fecha.value = "";
 
     mostrar();
 });
 
 mostrar();
 
-// 🔔 notificación al abrir
 if(Notification.permission !== "granted"){
     Notification.requestPermission();
 }
 
-let urgentes = eventos.filter(e => diasFaltan(e.fecha) <= 5);
+let urgentes = eventos.filter(e =>
+    diasFaltan(e.fecha) >= 0 &&
+    diasFaltan(e.fecha) <= 5
+);
 
-if(urgentes.length && Notification.permission === "granted"){
-    new Notification("📚 Tienes tareas próximas");
+if(
+    urgentes.length > 0 &&
+    Notification.permission === "granted"
+){
+    new Notification(
+        `📚 Tienes ${urgentes.length} tarea(s) o examen(es) próximos`
+    );
 }
+
 </script>
 
 </body>
