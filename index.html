@@ -1,266 +1,317 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<link rel="manifest" href="manifest.json">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calendario Escolar</title>
+<title>Calendario Pro</title>
 
 <style>
-body{
-    font-family: Arial, sans-serif;
-    background:#f2f4f8;
-    margin:0;
-    padding:20px;
+body{font-family:Arial;margin:0;background:#f2f4f8}
+
+header{
+background:#fff;
+padding:10px;
+display:flex;
+justify-content:space-between;
+align-items:center;
 }
 
-h1{
-    text-align:center;
+.menu{font-size:24px;cursor:pointer}
+
+.sidebar{
+position:fixed;
+left:-260px;
+top:0;
+width:250px;
+height:100%;
+background:#fff;
+padding:10px;
+transition:.3s;
+overflow:auto;
 }
 
-form{
-    background:white;
-    padding:15px;
-    border-radius:12px;
-    margin-bottom:15px;
+.sidebar.open{left:0}
+
+.page{
+padding:10px;
 }
 
-input, button{
-    width:100%;
-    padding:10px;
-    margin-top:8px;
-    box-sizing:border-box;
-}
-
-.filtros{
-    display:flex;
-    gap:5px;
-    margin:10px 0;
-}
-
-.filtros button{
-    flex:1;
+.card{
+background:#fff;
+padding:10px;
+margin:10px 0;
+border-radius:10px;
+cursor:pointer;
 }
 
 .evento{
-    margin-top:12px;
-    padding:15px;
-    border-radius:12px;
-    font-weight:bold;
-    position:relative;
+background:#fff;
+margin:10px 0;
+padding:10px;
+border-radius:10px;
+position:relative;
 }
 
-.rojo{
-    background:#ffd6d6;
-    border-left:6px solid red;
+.rojo{border-left:5px solid red}
+.amarillo{border-left:5px solid orange}
+.verde{border-left:5px solid green}
+
+button{
+padding:8px;
+margin-top:5px;
+width:100%;
 }
 
-.amarillo{
-    background:#fff4c2;
-    border-left:6px solid orange;
+.smallBtn{
+width:auto;
+position:absolute;
+top:10px;
 }
 
-.verde{
-    background:#d6ffd6;
-    border-left:6px solid green;
-}
+.del{right:10px}
+.edit{right:60px}
 
-button.edit{
-    position:absolute;
-    right:10px;
-    top:10px;
-    width:auto;
-}
-
-.punto-hoy{
-    display:inline-block;
-    width:12px;
-    height:12px;
-    background:black;
-    border-radius:50%;
-    margin-right:8px;
-}
+.hidden{display:none}
 </style>
 </head>
 
 <body>
 
-<h1>📚 Calendario Escolar</h1>
+<header>
+<div class="menu" onclick="toggleMenu()">☰</div>
+<h3>📚 Calendario Pro</h3>
+</header>
 
-<div class="filtros">
-    <button onclick="filtrar('todos')">Todos</button>
-    <button onclick="filtrar('rojo')">🔴</button>
-    <button onclick="filtrar('amarillo')">🟡</button>
-    <button onclick="filtrar('verde')">🟢</button>
+<!-- MENU -->
+<div class="sidebar" id="menu">
+
+<input id="search" placeholder="🔍 Buscar materia" oninput="renderMaterias()">
+
+<hr>
+
+<div id="materias"></div>
+
+<hr>
+
+<button onclick="show('home')">🏠 Inicio</button>
+<button onclick="show('events')">📅 Eventos</button>
+
 </div>
 
-<form id="form">
-    <input id="nombre" placeholder="Tarea o examen" required>
-    <input type="date" id="fecha" required>
-    <button type="submit">Agregar</button>
-</form>
+<!-- HOME -->
+<div class="page" id="home">
+
+<h3>⭐ Dashboard</h3>
+
+<div id="stats"></div>
+
+</div>
+
+<!-- EVENTS -->
+<div class="page hidden" id="events">
+
+<h3>📅 Eventos</h3>
 
 <div id="lista"></div>
+
+</div>
+
+<!-- MATERIA -->
+<div class="page hidden" id="materiaPage">
+
+<h3 id="materiaTitle"></h3>
+
+<div id="materiaContent"></div>
+
+</div>
+
+<!-- FORM -->
+<div class="page">
+
+<h3>➕ Agregar</h3>
+
+<input id="nombre" placeholder="Nombre">
+<input id="materia" placeholder="Materia">
+<input type="date" id="fecha">
+
+<select id="tipo">
+<option value="tarea">Tarea</option>
+<option value="examen">Examen</option>
+<option value="tp">TP</option>
+<option value="expo">Exposición</option>
+</select>
+
+<button onclick="add()">Agregar</button>
+
+</div>
 
 <script>
 
 let eventos = JSON.parse(localStorage.getItem("eventos")) || [];
 let filtro = "todos";
 
-function diasFaltan(fecha){
-
-    const hoy = new Date();
-    hoy.setHours(0,0,0,0);
-
-    const evento = new Date(fecha);
-    evento.setHours(0,0,0,0);
-
-    return Math.ceil(
-        (evento - hoy) / (1000 * 60 * 60 * 24)
-    );
+// SAVE
+function save(){
+localStorage.setItem("eventos",JSON.stringify(eventos));
 }
 
-function formatearFecha(fecha){
-
-    const f = new Date(fecha + "T00:00:00");
-
-    return f.toLocaleDateString("es-AR");
+// DIAS
+function dias(f){
+let h=new Date();h.setHours(0,0,0,0);
+let d=new Date(f);d.setHours(0,0,0,0);
+return Math.ceil((d-h)/86400000);
 }
 
-function color(dias){
-
-    if(dias <= 5) return "rojo";
-    if(dias <= 10) return "amarillo";
-
-    return "verde";
+// COLOR
+function color(d){
+if(d<=5)return"rojo";
+if(d<=10)return"amarillo";
+return"verde";
 }
 
-function guardar(){
+// NAV PAGES
+function show(p){
+home.classList.add("hidden");
+events.classList.add("hidden");
+materiaPage.classList.add("hidden");
 
-    localStorage.setItem(
-        "eventos",
-        JSON.stringify(eventos)
-    );
+if(p=="home")home.classList.remove("hidden");
+if(p=="events")events.classList.remove("hidden");
 }
 
-function limpiar(){
+// ADD
+function add(){
 
-    eventos = eventos.filter(
-        e => diasFaltan(e.fecha) >= 0
-    );
-}
-
-function mostrar(){
-
-    limpiar();
-
-    eventos.sort((a,b)=>
-        diasFaltan(a.fecha) -
-        diasFaltan(b.fecha)
-    );
-
-    let lista =
-        document.getElementById("lista");
-
-    lista.innerHTML = "";
-
-    eventos.forEach((e,i)=>{
-
-        let dias = diasFaltan(e.fecha);
-        let c = color(dias);
-
-        if(
-            filtro !== "todos" &&
-            filtro !== c
-        ){
-            return;
-        }
-
-        let punto = dias === 0
-            ? '<span class="punto-hoy"></span>'
-            : '';
-
-        let textoDias = dias === 0
-            ? '🔥 ¡Es hoy!'
-            : `⏳ Faltan ${dias} días`;
-
-        lista.innerHTML += `
-        <div class="evento ${c}">
-            ${punto}${e.nombre}<br>
-            📅 ${formatearFecha(e.fecha)}<br>
-            ${textoDias}
-            <button class="edit" onclick="editar(${i})">✏️</button>
-        </div>
-        `;
-    });
-
-    guardar();
-}
-
-function editar(i){
-
-    let nuevo = prompt(
-        "Editar nombre:",
-        eventos[i].nombre
-    );
-
-    if(nuevo){
-
-        eventos[i].nombre = nuevo;
-
-        mostrar();
-    }
-}
-
-function filtrar(f){
-
-    filtro = f;
-
-    mostrar();
-}
-
-document
-.getElementById("form")
-.addEventListener("submit", e=>{
-
-    e.preventDefault();
-
-    const nombre =
-        document.getElementById("nombre");
-
-    const fecha =
-        document.getElementById("fecha");
-
-    eventos.push({
-        nombre: nombre.value,
-        fecha: fecha.value
-    });
-
-    nombre.value = "";
-    fecha.value = "";
-
-    mostrar();
+eventos.push({
+nombre:nombre.value,
+materia:materia.value,
+fecha:fecha.value,
+tipo:tipo.value,
+temas:"",
+plan:""
 });
 
-mostrar();
+nombre.value="";
+materia.value="";
+fecha.value="";
 
-if(Notification.permission !== "granted"){
-    Notification.requestPermission();
+render();
 }
 
-let urgentes = eventos.filter(e =>
-    diasFaltan(e.fecha) >= 0 &&
-    diasFaltan(e.fecha) <= 5
-);
+// RENDER EVENTS
+function render(){
 
-if(
-    urgentes.length > 0 &&
-    Notification.permission === "granted"
-){
-    new Notification(
-        `📚 Tienes ${urgentes.length} tarea(s) o examen(es) próximos`
-    );
+eventos.sort((a,b)=>dias(a.fecha)-dias(b.fecha));
+
+lista.innerHTML="";
+
+let tareas = 0;
+let examenes = 0;
+
+eventos.forEach((e,i)=>{
+
+if(e.tipo=="tarea")tareas++;
+if(e.tipo=="examen")examenes++;
+
+let d=dias(e.fecha);
+
+lista.innerHTML+=`
+<div class="evento ${color(d)}">
+
+<b onclick="openMateria('${e.materia}')">${e.nombre}</b><br>
+📚 ${e.materia}<br>
+📅 ${e.fecha}<br>
+${d==0?"🔥 ES HOY":"⏳ "+d+" días"}
+
+<button class="smallBtn edit" onclick="edit(${i})">✏️</button>
+<button class="smallBtn del" onclick="del(${i})">🗑️</button>
+
+</div>`;
+});
+
+stats.innerHTML=`
+📊 Total: ${eventos.length}<br>
+📝 Tareas: ${tareas}<br>
+📖 Exámenes: ${examenes}
+`;
+
+save();
+renderMaterias();
 }
+
+// DELETE
+function del(i){
+eventos.splice(i,1);
+render();
+}
+
+// EDIT
+function edit(i){
+
+let n=prompt("Nombre:",eventos[i].nombre);
+let f=prompt("Fecha:",eventos[i].fecha);
+
+if(n)eventos[i].nombre=n;
+if(f)eventos[i].fecha=f;
+
+render();
+}
+
+// MENU
+function toggleMenu(){
+menu.classList.toggle("open");
+}
+
+// MATERIAS LIST
+function renderMaterias(){
+
+let q=search.value.toLowerCase();
+
+let mats=[...new Set(eventos.map(e=>e.materia))];
+
+materias.innerHTML="";
+
+mats
+.filter(m=>m.toLowerCase().includes(q))
+.forEach(m=>{
+materias.innerHTML+=`
+<div class="card" onclick="openMateria('${m}')">
+📚 ${m}
+</div>`;
+});
+}
+
+// OPEN MATERIA (NIVEL PRO REAL)
+function openMateria(m){
+
+show("materiaPage");
+
+materiaTitle.innerText="📚 "+m;
+
+let list = eventos.filter(e=>e.materia===m);
+
+materiaContent.innerHTML="";
+
+list.forEach(e=>{
+
+materiaContent.innerHTML+=`
+<div class="card">
+
+<b>${e.nombre}</b><br>
+📅 ${e.fecha}<br>
+
+🧠 Temas:<br>
+${e.temas || "Sin temas"}<br><br>
+
+📅 Plan de estudio:<br>
+${e.plan || "Sin plan"}
+
+</div>`;
+});
+}
+
+// INIT
+render();
 
 </script>
 
