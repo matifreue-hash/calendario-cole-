@@ -1,5 +1,5 @@
 
-    <!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -8,14 +8,10 @@
 
 <style>
 body {
-    font-family: Arial, sans-serif;
+    font-family: Arial;
     background: #f2f4f8;
-    margin: 20px;
-}
-
-.container {
-    max-width: 700px;
-    margin: auto;
+    margin: 0;
+    padding: 20px;
 }
 
 h1 {
@@ -25,99 +21,149 @@ h1 {
 form {
     background: white;
     padding: 15px;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-radius: 12px;
 }
 
 input, button {
-    padding: 10px;
-    margin: 5px;
     width: 100%;
+    padding: 10px;
+    margin-top: 8px;
 }
 
-button {
-    cursor: pointer;
+.filtros {
+    display: flex;
+    gap: 5px;
+    margin: 10px 0;
+}
+
+.filtros button {
+    flex: 1;
+    padding: 10px;
 }
 
 .evento {
-    margin-top: 15px;
+    margin-top: 12px;
     padding: 15px;
-    border-radius: 10px;
+    border-radius: 12px;
     font-weight: bold;
+    position: relative;
 }
 
-.rojo { background: #f8d7da; color: #721c24; }
-.amarillo { background: #fff3cd; color: #856404; }
-.verde { background: #d4edda; color: #155724; }
+.rojo { background:#ffd6d6; border-left:6px solid red; }
+.amarillo { background:#fff4c2; border-left:6px solid orange; }
+.verde { background:#d6ffd6; border-left:6px solid green; }
+
+button.edit {
+    position:absolute;
+    right:10px;
+    top:10px;
+    width:auto;
+}
 </style>
 </head>
 
 <body>
 
-<div class="container">
-
 <h1>📚 Calendario Escolar</h1>
 
+<div class="filtros">
+<button onclick="filtrar('todos')">Todos</button>
+<button onclick="filtrar('rojo')">🔴</button>
+<button onclick="filtrar('amarillo')">🟡</button>
+<button onclick="filtrar('verde')">🟢</button>
+</div>
+
 <form id="form">
-    <input type="text" id="nombre" placeholder="Nombre del evento" required>
-    <input type="date" id="fecha" required>
-    <button type="submit">Agregar evento</button>
+<input id="nombre" placeholder="Tarea o examen" required>
+<input type="date" id="fecha" required>
+<button>Agregar</button>
 </form>
 
 <div id="lista"></div>
 
-</div>
-
 <script>
-
 let eventos = JSON.parse(localStorage.getItem("eventos")) || [];
+let filtro = "todos";
 
-function diasFaltan(fecha) {
-    let hoy = new Date();
-    let evento = new Date(fecha);
-    return Math.ceil((evento - hoy) / (1000 * 60 * 60 * 24));
+function diasFaltan(fecha){
+    return Math.ceil((new Date(fecha)-new Date())/(1000*60*60*24));
 }
 
-function colorDias(dias) {
-    if (dias <= 5) return "rojo";
-    if (dias <= 10) return "amarillo";
+function color(d){
+    if(d<=5) return "rojo";
+    if(d<=10) return "amarillo";
     return "verde";
 }
 
-function mostrar() {
+function guardar(){
+    localStorage.setItem("eventos", JSON.stringify(eventos));
+}
+
+function limpiar(){
+    eventos = eventos.filter(e => diasFaltan(e.fecha) >= 0);
+}
+
+function mostrar(){
+    limpiar();
+    eventos.sort((a,b)=>diasFaltan(a.fecha)-diasFaltan(b.fecha));
+
     let lista = document.getElementById("lista");
     lista.innerHTML = "";
 
-    eventos.forEach(e => {
-        let dias = diasFaltan(e.fecha);
+    eventos.forEach((e,i)=>{
+        let c = color(diasFaltan(e.fecha));
+
+        if(filtro!="todos" && filtro!=c) return;
 
         lista.innerHTML += `
-            <div class="evento ${colorDias(dias)}">
-                ${e.nombre} <br>
-                Faltan ${dias} días
-            </div>
-        `;
+        <div class="evento ${c}">
+            ${e.nombre} <br>
+            Faltan ${diasFaltan(e.fecha)} días
+            <button class="edit" onclick="editar(${i})">✏️</button>
+        </div>`;
     });
+
+    guardar();
 }
 
-document.getElementById("form").addEventListener("submit", function(e){
+function editar(i){
+    let nuevo = prompt("Editar nombre:", eventos[i].nombre);
+    if(nuevo) eventos[i].nombre = nuevo;
+    mostrar();
+}
+
+function filtrar(f){
+    filtro = f;
+    mostrar();
+}
+
+document.getElementById("form").addEventListener("submit", e=>{
     e.preventDefault();
 
     eventos.push({
-        nombre: document.getElementById("nombre").value,
-        fecha: document.getElementById("fecha").value
+        nombre: nombre.value,
+        fecha: fecha.value
     });
 
-    localStorage.setItem("eventos", JSON.stringify(eventos));
+    nombre.value="";
+    fecha.value="";
 
-    this.reset();
     mostrar();
 });
 
 mostrar();
 
+// 🔔 notificación al abrir
+if(Notification.permission !== "granted"){
+    Notification.requestPermission();
+}
+
+let urgentes = eventos.filter(e => diasFaltan(e.fecha) <= 5);
+
+if(urgentes.length && Notification.permission === "granted"){
+    new Notification("📚 Tienes tareas próximas");
+}
 </script>
 
 </body>
 </html>
-
