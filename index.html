@@ -1,279 +1,268 @@
 
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<link rel="manifest" href="manifest.json">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calendario Escolar PRO</title>
+<title>Calendario Escolar</title>
 
 <style>
 body{
-font-family:Arial;
-margin:0;
-background:#f2f4f8;
+    font-family: Arial, sans-serif;
+    background:#f2f4f8;
+    margin:0;
+    padding:20px;
 }
 
-header{
-background:#fff;
-padding:10px;
-display:flex;
-justify-content:space-between;
-align-items:center;
+h1{
+    text-align:center;
 }
 
-.menu{
-font-size:24px;
-cursor:pointer;
+form{
+    background:white;
+    padding:15px;
+    border-radius:12px;
+    margin-bottom:15px;
 }
 
-.sidebar{
-position:fixed;
-left:-260px;
-top:0;
-width:250px;
-height:100%;
-background:#fff;
-padding:10px;
-transition:.3s;
-overflow:auto;
+input, button{
+    width:100%;
+    padding:10px;
+    margin-top:8px;
+    box-sizing:border-box;
 }
 
-.sidebar.open{left:0}
+.filtros{
+    display:flex;
+    gap:5px;
+    margin:10px 0;
+}
 
-input,select,button{
-width:100%;
-padding:10px;
-margin-top:8px;
-box-sizing:border-box;
+.filtros button{
+    flex:1;
 }
 
 .evento{
-background:#fff;
-margin:10px;
-padding:10px;
-border-radius:10px;
-position:relative;
+    margin-top:12px;
+    padding:15px;
+    border-radius:12px;
+    font-weight:bold;
+    position:relative;
 }
 
-.rojo{border-left:5px solid red}
-.amarillo{border-left:5px solid orange}
-.verde{border-left:5px solid green}
-
-button.small{
-width:auto;
-position:absolute;
-top:10px;
+.rojo{
+    background:#ffd6d6;
+    border-left:6px solid red;
 }
 
-.edit{right:60px}
-.del{right:10px}
+.amarillo{
+    background:#fff4c2;
+    border-left:6px solid orange;
+}
+
+.verde{
+    background:#d6ffd6;
+    border-left:6px solid green;
+}
+
+button.edit{
+    position:absolute;
+    right:10px;
+    top:10px;
+    width:auto;
+}
+
+.punto-hoy{
+    display:inline-block;
+    width:12px;
+    height:12px;
+    background:black;
+    border-radius:50%;
+    margin-right:8px;
+}
 </style>
 </head>
 
 <body>
 
-<header>
-<div class="menu" onclick="toggleMenu()">☰</div>
-<h3>📚 Calendario PRO</h3>
-</header>
+<h1>📚 Calendario Escolar</h1>
 
-<!-- MENU -->
-<div class="sidebar" id="menu">
-
-<input id="buscador" placeholder="🔍 Buscar materia" oninput="renderMaterias()">
-
-<hr>
-
-<div id="materias"></div>
-
-<hr>
-
-<button onclick="filtro='todos';render()">Todas</button>
-<button onclick="filtro='tarea';render()">Tareas</button>
-<button onclick="filtro='examen';render()">Exámenes</button>
-<button onclick="filtro='tp';render()">TP</button>
-<button onclick="filtro='expo';render()">Exposiciones</button>
-
+<div class="filtros">
+    <button onclick="filtrar('todos')">Todos</button>
+    <button onclick="filtrar('rojo')">🔴</button>
+    <button onclick="filtrar('amarillo')">🟡</button>
+    <button onclick="filtrar('verde')">🟢</button>
 </div>
 
-<!-- FORM -->
 <form id="form">
-<input id="nombre" placeholder="Nombre" required>
-<input id="materia" placeholder="Materia" required>
-<input type="date" id="fecha" required>
-
-<select id="tipo">
-<option value="tarea">Tarea</option>
-<option value="examen">Examen</option>
-<option value="tp">Trabajo práctico</option>
-<option value="expo">Exposición</option>
-</select>
-
-<button>Agregar</button>
+    <input id="nombre" placeholder="Tarea o examen" required>
+    <input type="date" id="fecha" required>
+    <button type="submit">Agregar</button>
 </form>
 
 <div id="lista"></div>
 
 <script>
 
-// =======================
-// DATOS
-// =======================
 let eventos = JSON.parse(localStorage.getItem("eventos")) || [];
 let filtro = "todos";
 
-// =======================
-// GUARDAR
-// =======================
-function save(){
-localStorage.setItem("eventos", JSON.stringify(eventos));
+function diasFaltan(fecha){
+
+    const hoy = new Date();
+    hoy.setHours(0,0,0,0);
+
+    const evento = new Date(fecha);
+    evento.setHours(0,0,0,0);
+
+    return Math.ceil(
+        (evento - hoy) / (1000 * 60 * 60 * 24)
+    );
 }
 
-// =======================
-// DIAS
-// =======================
-function dias(fecha){
-let hoy = new Date();
-hoy.setHours(0,0,0,0);
+function formatearFecha(fecha){
 
-let f = new Date(fecha);
-f.setHours(0,0,0,0);
+    const f = new Date(fecha + "T00:00:00");
 
-return Math.ceil((f - hoy)/86400000);
+    return f.toLocaleDateString("es-AR");
 }
 
-// =======================
-// COLOR
-// =======================
-function color(d){
-if(d <= 5) return "rojo";
-if(d <= 10) return "amarillo";
-return "verde";
+function color(dias){
+
+    if(dias <= 5) return "rojo";
+    if(dias <= 10) return "amarillo";
+
+    return "verde";
 }
 
-// =======================
-// RENDER PRINCIPAL
-// =======================
-function render(){
+function guardar(){
 
-let lista = document.getElementById("lista");
-lista.innerHTML = "";
+    localStorage.setItem(
+        "eventos",
+        JSON.stringify(eventos)
+    );
+}
 
-eventos.sort((a,b)=>dias(a.fecha)-dias(b.fecha));
+function limpiar(){
 
-eventos.forEach((e,i)=>{
+    eventos = eventos.filter(
+        e => diasFaltan(e.fecha) >= 0
+    );
+}
 
-if(filtro !== "todos" && filtro !== e.tipo) return;
+function mostrar(){
 
-let d = dias(e.fecha);
+    limpiar();
 
-lista.innerHTML += `
-<div class="evento ${color(d)}">
-<b>${e.nombre}</b><br>
-📚 ${e.materia}<br>
-📅 ${e.fecha}<br>
-${d === 0 ? "🔥 ES HOY" : "⏳ " + d + " días"}
+    eventos.sort((a,b)=>
+        diasFaltan(a.fecha) -
+        diasFaltan(b.fecha)
+    );
 
-<button class="small edit" onclick="edit(${i})">✏️</button>
-<button class="small del" onclick="del(${i})">🗑️</button>
-</div>`;
+    let lista =
+        document.getElementById("lista");
+
+    lista.innerHTML = "";
+
+    eventos.forEach((e,i)=>{
+
+        let dias = diasFaltan(e.fecha);
+        let c = color(dias);
+
+        if(
+            filtro !== "todos" &&
+            filtro !== c
+        ){
+            return;
+        }
+
+        let punto = dias === 0
+            ? '<span class="punto-hoy"></span>'
+            : '';
+
+        let textoDias = dias === 0
+            ? '🔥 ¡Es hoy!'
+            : `⏳ Faltan ${dias} días`;
+
+        lista.innerHTML += `
+        <div class="evento ${c}">
+            ${punto}${e.nombre}<br>
+            📅 ${formatearFecha(e.fecha)}<br>
+            ${textoDias}
+            <button class="edit" onclick="editar(${i})">✏️</button>
+        </div>
+        `;
+    });
+
+    guardar();
+}
+
+function editar(i){
+
+    let nuevo = prompt(
+        "Editar nombre:",
+        eventos[i].nombre
+    );
+
+    if(nuevo){
+
+        eventos[i].nombre = nuevo;
+
+        mostrar();
+    }
+}
+
+function filtrar(f){
+
+    filtro = f;
+
+    mostrar();
+}
+
+document
+.getElementById("form")
+.addEventListener("submit", e=>{
+
+    e.preventDefault();
+
+    const nombre =
+        document.getElementById("nombre");
+
+    const fecha =
+        document.getElementById("fecha");
+
+    eventos.push({
+        nombre: nombre.value,
+        fecha: fecha.value
+    });
+
+    nombre.value = "";
+    fecha.value = "";
+
+    mostrar();
 });
 
-save();
-renderMaterias();
+mostrar();
+
+if(Notification.permission !== "granted"){
+    Notification.requestPermission();
 }
 
-// =======================
-// AGREGAR
-// =======================
-document.getElementById("form").addEventListener("submit", e=>{
-e.preventDefault();
+let urgentes = eventos.filter(e =>
+    diasFaltan(e.fecha) >= 0 &&
+    diasFaltan(e.fecha) <= 5
+);
 
-eventos.push({
-nombre:nombre.value,
-materia:materia.value,
-fecha:fecha.value,
-tipo:tipo.value
-});
-
-form.reset();
-render();
-});
-
-// =======================
-// ELIMINAR
-// =======================
-function del(i){
-eventos.splice(i,1);
-render();
+if(
+    urgentes.length > 0 &&
+    Notification.permission === "granted"
+){
+    new Notification(
+        `📚 Tienes ${urgentes.length} tarea(s) o examen(es) próximos`
+    );
 }
-
-// =======================
-// EDITAR
-// =======================
-function edit(i){
-
-let n = prompt("Nombre:", eventos[i].nombre);
-let f = prompt("Fecha (AAAA-MM-DD):", eventos[i].fecha);
-
-if(n) eventos[i].nombre = n;
-if(f) eventos[i].fecha = f;
-
-render();
-}
-
-// =======================
-// MENU
-// =======================
-function toggleMenu(){
-document.getElementById("menu").classList.toggle("open");
-}
-
-// =======================
-// MATERIAS
-// =======================
-function renderMaterias(){
-
-let q = document.getElementById("buscador").value.toLowerCase();
-
-let mats = [...new Set(eventos.map(e=>e.materia))];
-
-let div = document.getElementById("materias");
-div.innerHTML = "";
-
-mats
-.filter(m=>m.toLowerCase().includes(q))
-.forEach(m=>{
-div.innerHTML += `<button onclick="ver('${m}')">${m}</button>`;
-});
-}
-
-// =======================
-// VER MATERIA
-// =======================
-function ver(m){
-
-let data = eventos.filter(e=>e.materia === m);
-
-let txt = "📚 " + m + "\n\n";
-
-data.forEach(e=>{
-txt += `
-📖 ${e.nombre}
-📅 ${e.fecha}
-Tipo: ${e.tipo}
-
--------------------
-`;
-});
-
-alert(txt);
-}
-
-// =======================
-// INIT
-// =======================
-render();
 
 </script>
 
