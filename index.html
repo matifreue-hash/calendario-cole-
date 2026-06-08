@@ -17,10 +17,7 @@ justify-content:space-between;
 align-items:center;
 }
 
-.menu{
-font-size:24px;
-cursor:pointer;
-}
+.menu{font-size:24px;cursor:pointer}
 
 .sidebar{
 position:fixed;
@@ -34,9 +31,7 @@ transition:.3s;
 overflow:auto;
 }
 
-.sidebar.open{
-left:0;
-}
+.sidebar.open{left:0}
 
 input,select,button{
 width:100%;
@@ -53,9 +48,9 @@ border-radius:10px;
 position:relative;
 }
 
-.rojo{border-left:5px solid red;}
-.amarillo{border-left:5px solid orange;}
-.verde{border-left:5px solid green;}
+.rojo{border-left:5px solid red}
+.amarillo{border-left:5px solid orange}
+.verde{border-left:5px solid green}
 
 button.delete{
 position:absolute;
@@ -77,10 +72,10 @@ width:auto;
 
 <header>
 <div class="menu" onclick="toggleMenu()">☰</div>
-<h3>📚 Calendario</h3>
+<h3>📚 Calendario Escolar</h3>
 </header>
 
-<!-- MENÚ -->
+<!-- MENU -->
 <div class="sidebar" id="menu">
 
 <input id="buscador" placeholder="🔍 Buscar materia" oninput="renderMaterias()">
@@ -108,7 +103,7 @@ width:auto;
 <select id="tipo">
 <option value="tarea">Tarea</option>
 <option value="examen">Examen</option>
-<option value="tp">Trabajo práctico</option>
+<option value="tp">TP</option>
 <option value="expo">Exposición</option>
 </select>
 
@@ -119,29 +114,36 @@ width:auto;
 
 <script>
 
-let eventos = JSON.parse(localStorage.getItem("eventos")) || [];
+let eventos = [];
 let filtro = "todos";
 
-// GUARDAR
+// cargar seguro
+try {
+eventos = JSON.parse(localStorage.getItem("eventos")) || [];
+} catch(e){
+eventos = [];
+}
+
+// guardar
 function save(){
 localStorage.setItem("eventos", JSON.stringify(eventos));
 }
 
-// DIAS
+// dias
 function dias(fecha){
 let h=new Date();h.setHours(0,0,0,0);
 let f=new Date(fecha);f.setHours(0,0,0,0);
 return Math.ceil((f-h)/86400000);
 }
 
-// COLOR
+// color
 function color(d){
 if(d<=5)return"rojo";
 if(d<=10)return"amarillo";
 return"verde";
 }
 
-// RENDER PRINCIPAL
+// render principal
 function render(){
 
 eventos.sort((a,b)=>dias(a.fecha)-dias(b.fecha));
@@ -171,32 +173,39 @@ renderMaterias();
 save();
 }
 
-// AGREGAR
+// agregar seguro
 document.getElementById("form").addEventListener("submit",e=>{
 e.preventDefault();
 
+let n=document.getElementById("nombre");
+let m=document.getElementById("materia");
+let f=document.getElementById("fecha");
+let t=document.getElementById("tipo");
+
+if(!n.value||!m.value||!f.value)return;
+
 eventos.push({
-nombre:nombre.value,
-materia:materia.value,
-fecha:fecha.value,
-tipo:tipo.value
+nombre:n.value,
+materia:m.value,
+fecha:f.value,
+tipo:t.value
 });
 
-form.reset();
+e.target.reset();
 render();
 });
 
-// ELIMINAR
+// eliminar
 function del(i){
 eventos.splice(i,1);
 render();
 }
 
-// EDITAR
+// editar (nombre + fecha)
 function edit(i){
 
-let n = prompt("Nombre:",eventos[i].nombre);
-let f = prompt("Fecha (AAAA-MM-DD):",eventos[i].fecha);
+let n=prompt("Nombre:",eventos[i].nombre);
+let f=prompt("Fecha (AAAA-MM-DD):",eventos[i].fecha);
 
 if(n)eventos[i].nombre=n;
 if(f)eventos[i].fecha=f;
@@ -204,12 +213,12 @@ if(f)eventos[i].fecha=f;
 render();
 }
 
-// MENÚ
+// menu
 function toggleMenu(){
 document.getElementById("menu").classList.toggle("open");
 }
 
-// MATERIAS
+// materias
 function renderMaterias(){
 
 let q=document.getElementById("buscador").value.toLowerCase();
@@ -222,52 +231,31 @@ div.innerHTML="";
 mats
 .filter(m=>m.toLowerCase().includes(q))
 .forEach(m=>{
-div.innerHTML+=`<button onclick="verMateria('${m}')">${m}</button>`;
+div.innerHTML+=`<button onclick="ver('${m}')">${m}</button>`;
 });
 }
 
-// VER MATERIA
-function verMateria(m){
+// ver materia
+function ver(m){
 
-let lista = eventos.filter(e=>e.materia===m);
+let lista=eventos.filter(e=>e.materia===m);
 
-let txt = "📚 "+m+"\n\n";
+let txt="📚 "+m+"\n\n";
 
 lista.forEach(e=>{
-txt += `
+txt+=`
 📖 ${e.nombre}
 📅 ${e.fecha}
 Tipo: ${e.tipo}
 
--------------------
+----------------
 `;
 });
 
 alert(txt);
 }
 
-// NOTIFICACIONES
-if(Notification.permission!=="granted"){
-Notification.requestPermission();
-}
-
-function notify(){
-
-let urgentes = eventos.filter(e=>dias(e.fecha)<=5);
-
-if(urgentes.length===0) return;
-
-let mats=[...new Set(urgentes.map(e=>e.materia))];
-
-if(Notification.permission==="granted"){
-new Notification("📚 Estudio pendiente",{
-body:mats.join(", ")
-});
-}
-}
-
-setInterval(notify,60000);
-
+// iniciar
 render();
 
 </script>
