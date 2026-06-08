@@ -1,81 +1,55 @@
-}
 
-.container {
-
-    max-width: 700px;
-
-    margin: auto;
-
-}<!DOCTYPE html>
-
+    <!DOCTYPE html>
 <html lang="es">
-
 <head>
-
 <meta charset="UTF-8">
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Calendario Escolar</title>
 
 <style>
-
 body {
-
     font-family: Arial, sans-serif;
-
     background: #f2f4f8;
-
     margin: 20px;
+}
 
+.container {
+    max-width: 700px;
+    margin: auto;
 }
 
 h1 {
-
     text-align: center;
+}
 
 form {
-
     background: white;
-
     padding: 15px;
-
     border-radius: 10px;
-
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-
 }
 
 input, button {
-
     padding: 10px;
-
     margin: 5px;
+    width: 100%;
+}
 
-    width: 95%;
-
+button {
+    cursor: pointer;
 }
 
 .evento {
-
     margin-top: 15px;
-
     padding: 15px;
-
     border-radius: 10px;
-
     font-weight: bold;
-
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-
 }
 
 .rojo { background: #f8d7da; color: #721c24; }
-
 .amarillo { background: #fff3cd; color: #856404; }
-
 .verde { background: #d4edda; color: #155724; }
-
 </style>
-
 </head>
 
 <body>
@@ -85,13 +59,9 @@ input, button {
 <h1>📚 Calendario Escolar</h1>
 
 <form id="form">
-
-    <input type="text" id="nombre" placeholder="Nombre del examen o evento" required>
-
+    <input type="text" id="nombre" placeholder="Nombre del evento" required>
     <input type="date" id="fecha" required>
-
     <button type="submit">Agregar evento</button>
-
 </form>
 
 <div id="lista"></div>
@@ -103,73 +73,45 @@ input, button {
 let eventos = JSON.parse(localStorage.getItem("eventos")) || [];
 
 function diasFaltan(fecha) {
-
-    const hoy = new Date();
-
-    const evento = new Date(fecha);
-
-    const diff = Math.ceil((evento - hoy) / (1000 * 60 * 60 * 24));
-
-    return diff;
-
+    let hoy = new Date();
+    let evento = new Date(fecha);
+    return Math.ceil((evento - hoy) / (1000 * 60 * 60 * 24));
 }
 
 function colorDias(dias) {
-
     if (dias <= 5) return "rojo";
-
     if (dias <= 10) return "amarillo";
-
     return "verde";
-
 }
 
-    const lista = document.getElementById("lista");
-
+function mostrar() {
+    let lista = document.getElementById("lista");
     lista.innerHTML = "";
 
     eventos.forEach(e => {
-
         let dias = diasFaltan(e.fecha);
 
-        let color = colorDias(dias);
-
         lista.innerHTML += `
-
-            <div class="evento ${color}">
-
+            <div class="evento ${colorDias(dias)}">
                 ${e.nombre} <br>
-
                 Faltan ${dias} días
-
             </div>
-
         `;
-
     });
-
 }
 
 document.getElementById("form").addEventListener("submit", function(e){
-
     e.preventDefault();
 
-    let nuevo = {
-
+    eventos.push({
         nombre: document.getElementById("nombre").value,
-
         fecha: document.getElementById("fecha").value
-
-    };
-
-    eventos.push(nuevo);
+    });
 
     localStorage.setItem("eventos", JSON.stringify(eventos));
 
     this.reset();
-
     mostrar();
-
 });
 
 mostrar();
@@ -177,14 +119,5 @@ mostrar();
 </script>
 
 </body>
-
-</html><!DOCTYPE html>
-
-<html lang="es">
-
-<head>
-
-<meta charset="UTF-8">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</html>
 
