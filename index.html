@@ -3,10 +3,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<link rel="manifest" href="manifest.json">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calendario Escolar</title>
+<title>Calendario Escolar Pro</title>
 
 <style>
 body{
@@ -16,9 +15,7 @@ body{
     padding:20px;
 }
 
-h1{
-    text-align:center;
-}
+h1{text-align:center;}
 
 form{
     background:white;
@@ -40,9 +37,7 @@ input, button{
     margin:10px 0;
 }
 
-.filtros button{
-    flex:1;
-}
+.filtros button{flex:1;}
 
 .evento{
     margin-top:12px;
@@ -52,20 +47,9 @@ input, button{
     position:relative;
 }
 
-.rojo{
-    background:#ffd6d6;
-    border-left:6px solid red;
-}
-
-.amarillo{
-    background:#fff4c2;
-    border-left:6px solid orange;
-}
-
-.verde{
-    background:#d6ffd6;
-    border-left:6px solid green;
-}
+.rojo{background:#ffd6d6;border-left:6px solid red;}
+.amarillo{background:#fff4c2;border-left:6px solid orange;}
+.verde{background:#d6ffd6;border-left:6px solid green;}
 
 button.edit{
     position:absolute;
@@ -73,6 +57,46 @@ button.edit{
     top:10px;
     width:auto;
 }
+
+/* MENU */
+.menu-btn{
+    position:fixed;
+    top:15px;
+    left:15px;
+    font-size:24px;
+    background:white;
+    border:none;
+    border-radius:8px;
+    padding:8px 12px;
+    z-index:1001;
+    cursor:pointer;
+}
+
+.menu{
+    position:fixed;
+    top:0;
+    left:-260px;
+    width:250px;
+    height:100%;
+    background:white;
+    box-shadow:2px 0 10px rgba(0,0,0,0.2);
+    padding:20px;
+    transition:0.3s;
+    z-index:1002;
+}
+
+.menu.open{left:0;}
+
+.overlay{
+    position:fixed;
+    top:0;left:0;
+    width:100%;height:100%;
+    background:rgba(0,0,0,0.4);
+    display:none;
+    z-index:1000;
+}
+
+.overlay.show{display:block;}
 
 .punto-hoy{
     display:inline-block;
@@ -89,11 +113,38 @@ button.edit{
 
 <h1>📚 Calendario Escolar</h1>
 
-<div class="filtros">
+<button id="menuBtn" class="menu-btn">☰</button>
+
+<div id="overlay" class="overlay"></div>
+
+<div id="menu" class="menu">
+
+    <h3>📂 Filtros</h3>
     <button onclick="filtrar('todos')">Todos</button>
-    <button onclick="filtrar('rojo')">🔴</button>
-    <button onclick="filtrar('amarillo')">🟡</button>
-    <button onclick="filtrar('verde')">🟢</button>
+    <button onclick="filtrar('rojo')">🔴 Urgentes</button>
+    <button onclick="filtrar('amarillo')">🟡 Próximos</button>
+    <button onclick="filtrar('verde')">🟢 Lejanos</button>
+
+    <hr>
+
+    <h3>⚙️ Configuración</h3>
+
+    <label>🔊 Volumen música</label>
+    <input type="range" min="0" max="1" step="0.1" value="0.3"
+    id="volumenInput">
+
+    <button onclick="toggleSilencio()" id="silencioBtn">
+        🔊 Silenciar notificaciones
+    </button>
+
+    <hr>
+
+    <h3>🎵 Música</h3>
+
+    <button onclick="toggleMusica()">
+        ▶ Activar música tranquila
+    </button>
+
 </div>
 
 <form id="form">
@@ -104,164 +155,197 @@ button.edit{
 
 <div id="lista"></div>
 
+<audio id="musica" loop>
+    <source src="https://cdn.pixabay.com/download/audio/2022/10/16/audio_7c8b1c1c7d.mp3?filename=soft-piano-ambient-118602.mp3">
+</audio>
+
 <script>
 
 let eventos = JSON.parse(localStorage.getItem("eventos")) || [];
 let filtro = "todos";
 
-function diasFaltan(fecha){
+let notificacionesSilenciadas = false;
+let musicaActiva = false;
 
+const menu = document.getElementById("menu");
+const overlay = document.getElementById("overlay");
+const menuBtn = document.getElementById("menuBtn");
+
+const musica = document.getElementById("musica");
+
+/* MENU */
+menuBtn.onclick = ()=> {
+    menu.classList.add("open");
+    overlay.classList.add("show");
+};
+
+overlay.onclick = cerrarMenu;
+
+menu.querySelectorAll("button").forEach(b=>{
+    b.addEventListener("click", cerrarMenu);
+});
+
+function cerrarMenu(){
+    menu.classList.remove("open");
+    overlay.classList.remove("show");
+}
+
+/* CALENDARIO */
+
+function diasFaltan(fecha){
     const hoy = new Date();
     hoy.setHours(0,0,0,0);
 
     const evento = new Date(fecha);
     evento.setHours(0,0,0,0);
 
-    return Math.ceil(
-        (evento - hoy) / (1000 * 60 * 60 * 24)
-    );
+    return Math.ceil((evento - hoy)/(1000*60*60*24));
 }
 
-function formatearFecha(fecha){
-
-    const f = new Date(fecha + "T00:00:00");
-
-    return f.toLocaleDateString("es-AR");
-}
-
-function color(dias){
-
-    if(dias <= 5) return "rojo";
-    if(dias <= 10) return "amarillo";
-
+function color(d){
+    if(d<=5) return "rojo";
+    if(d<=10) return "amarillo";
     return "verde";
 }
 
-function guardar(){
-
-    localStorage.setItem(
-        "eventos",
-        JSON.stringify(eventos)
-    );
+function formatearFecha(f){
+    return new Date(f+"T00:00:00").toLocaleDateString("es-AR");
 }
 
-function limpiar(){
-
-    eventos = eventos.filter(
-        e => diasFaltan(e.fecha) >= 0
-    );
+function guardar(){
+    localStorage.setItem("eventos", JSON.stringify(eventos));
 }
 
 function mostrar(){
 
-    limpiar();
+    eventos.sort((a,b)=> new Date(a.fecha)-new Date(b.fecha));
 
-    eventos.sort((a,b)=>
-        diasFaltan(a.fecha) -
-        diasFaltan(b.fecha)
-    );
-
-    let lista =
-        document.getElementById("lista");
-
-    lista.innerHTML = "";
+    let lista = document.getElementById("lista");
+    lista.innerHTML="";
 
     eventos.forEach((e,i)=>{
 
-        let dias = diasFaltan(e.fecha);
-        let c = color(dias);
+        let d = diasFaltan(e.fecha);
+        let c = color(d);
 
-        if(
-            filtro !== "todos" &&
-            filtro !== c
-        ){
-            return;
-        }
+        if(filtro!=="todos" && filtro!==c) return;
 
-        let punto = dias === 0
-            ? '<span class="punto-hoy"></span>'
-            : '';
-
-        let textoDias = dias === 0
-            ? '🔥 ¡Es hoy!'
-            : `⏳ Faltan ${dias} días`;
+        let msg = d===0 ? "🔥 Hoy" : `⏳ ${d} días`;
 
         lista.innerHTML += `
         <div class="evento ${c}">
-            ${punto}${e.nombre}<br>
+            ${e.nombre}<br>
             📅 ${formatearFecha(e.fecha)}<br>
-            ${textoDias}
+            ${msg}
             <button class="edit" onclick="editar(${i})">✏️</button>
-        </div>
-        `;
+        </div>`;
     });
 
     guardar();
 }
 
+/* EDITAR */
 function editar(i){
-
-    let nuevo = prompt(
-        "Editar nombre:",
-        eventos[i].nombre
-    );
-
-    if(nuevo){
-
-        eventos[i].nombre = nuevo;
-
+    let n = prompt("Editar:", eventos[i].nombre);
+    if(n){
+        eventos[i].nombre = n;
         mostrar();
     }
 }
 
+/* FILTRO */
 function filtrar(f){
-
     filtro = f;
-
     mostrar();
 }
 
-document
-.getElementById("form")
-.addEventListener("submit", e=>{
-
+/* FORM */
+document.getElementById("form").addEventListener("submit",e=>{
     e.preventDefault();
-
-    const nombre =
-        document.getElementById("nombre");
-
-    const fecha =
-        document.getElementById("fecha");
 
     eventos.push({
         nombre: nombre.value,
         fecha: fecha.value
     });
 
-    nombre.value = "";
-    fecha.value = "";
+    nombre.value="";
+    fecha.value="";
 
     mostrar();
 });
 
+/* NOTIFICACIONES */
+function mensaje(){
+    let p = eventos
+    .map(e=>({ ...e, d:diasFaltan(e.fecha)}))
+    .filter(e=>e.d>=0)
+    .sort((a,b)=>a.d-b.d)
+    .slice(0,3);
+
+    if(p.length===0) return null;
+
+    return p.map(e=>
+        `📚 Estudiar "${e.nombre}" — faltan ${e.d} días`
+    ).join("\n");
+}
+
+function notificar(){
+    if(notificacionesSilenciadas) return;
+
+    let msg = mensaje();
+    if(!msg) return;
+
+    new Notification("📚 Estudio", { body: msg });
+}
+
+/* 3 HORARIOS */
+function programar(){
+    const horas=[9,15,21];
+
+    horas.forEach(h=>{
+        let now=new Date();
+        let t=new Date();
+        t.setHours(h,0,0,0);
+
+        if(t<now) t.setDate(t.getDate()+1);
+
+        setTimeout(()=>{
+            notificar();
+            programar();
+        }, t-now);
+    });
+}
+
+/* CONFIG */
+document.getElementById("volumenInput").oninput = (e)=>{
+    musica.volume = e.target.value;
+};
+
+function toggleSilencio(){
+    notificacionesSilenciadas = !notificacionesSilenciadas;
+
+    document.getElementById("silencioBtn").innerText =
+    notificacionesSilenciadas ? "🔇 Activar" : "🔊 Silenciar";
+}
+
+/* MUSICA */
+function toggleMusica(){
+    musicaActiva = !musicaActiva;
+
+    if(musicaActiva){
+        musica.volume = document.getElementById("volumenInput").value;
+        musica.play();
+    } else {
+        musica.pause();
+    }
+}
+
+/* START */
 mostrar();
+programar();
 
 if(Notification.permission !== "granted"){
     Notification.requestPermission();
-}
-
-let urgentes = eventos.filter(e =>
-    diasFaltan(e.fecha) >= 0 &&
-    diasFaltan(e.fecha) <= 5
-);
-
-if(
-    urgentes.length > 0 &&
-    Notification.permission === "granted"
-){
-    new Notification(
-        `📚 Tienes ${urgentes.length} tarea(s) o examen(es) próximos`
-    );
 }
 
 </script>
