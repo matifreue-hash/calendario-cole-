@@ -4,34 +4,29 @@
 
 
 
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Calendario Escolar Pro</title>
 
 <style>
 body{
-    font-family: "Segoe UI", Arial, sans-serif;
-    background: linear-gradient(135deg, #eef2f7, #dfe7f3);
+    font-family: Arial;
     margin:0;
-    padding:16px;
+    background:linear-gradient(135deg,#eef2f7,#dfe7f3);
 }
 
-/* APP CARD */
+/* APP */
 .app{
     max-width:520px;
     margin:auto;
     background:white;
-    border-radius:20px;
     padding:16px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.08);
-}
-
-/* TITULOS */
-h1{
-    text-align:center;
+    border-radius:20px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.1);
 }
 
 /* INPUTS */
@@ -39,85 +34,56 @@ input,button{
     width:100%;
     padding:10px;
     margin-top:8px;
-    border-radius:12px;
+    border-radius:10px;
     border:1px solid #ddd;
-    font-size:14px;
 }
 
-/* BOTON */
 button{
     background:#4a90e2;
     color:white;
-    font-weight:bold;
     border:none;
-}
-
-button:active{
-    transform:scale(0.97);
+    font-weight:bold;
 }
 
 /* CONTADOR */
 #contador{
     text-align:center;
-    margin:10px 0;
     font-weight:bold;
+    margin:10px 0;
 }
 
 /* EVENTOS */
 .evento{
     margin-top:10px;
-    padding:12px;
-    border-radius:12px;
-    position:relative;
-    font-weight:bold;
-    animation: aparecer 0.25s ease;
+    padding:10px;
+    border-radius:10px;
+    animation: aparecer .2s ease;
     transition:0.2s;
 }
 
 .evento:hover{
     transform:scale(1.02);
-    box-shadow:0 6px 18px rgba(0,0,0,0.12);
 }
 
 @keyframes aparecer{
-    from{opacity:0; transform:translateY(10px);}
-    to{opacity:1; transform:translateY(0);}
+    from{opacity:0;transform:translateY(10px);}
+    to{opacity:1;}
 }
 
-.rojo{background:#ffd6d6;}
-.amarillo{background:#fff4c2;}
-.verde{background:#d6ffd6;}
-
-/* DELETE */
-.delete{
-    position:absolute;
-    right:10px;
-    top:10px;
-    width:auto;
-    border:none;
-    background:#ff4d4d;
-    color:white;
-    border-radius:8px;
+/* COLORES NUEVOS */
+.rojo{
+    background:#ffd6d6;
+    border-left:6px solid #ff3b30;
 }
 
-/* CALENDARIO */
-#calendario{
-    display:grid;
-    grid-template-columns:repeat(7,1fr);
-    gap:5px;
-    margin-top:20px;
+.amarillo{
+    background:#fff4c2;
+    border-left:6px solid #ffb300;
 }
 
-.dia{
-    background:#f8f8f8;
-    padding:8px;
-    border-radius:8px;
-    min-height:60px;
-    font-size:12px;
-}
-
-.hoy{
-    border:2px solid #4a90e2;
+.verde{
+    background:#d6ffd6;
+    border-left:6px solid #34c759;
 }
 </style>
 </head>
@@ -128,9 +94,9 @@ button:active{
 
 <h1>📚 Calendario Escolar Pro</h1>
 
-<input id="buscar" placeholder="🔍 Buscar eventos...">
-
 <div id="contador"></div>
+
+<input id="buscar" placeholder="🔍 Buscar...">
 
 <form id="form">
     <input id="nombre" placeholder="Tarea o examen" required>
@@ -142,17 +108,14 @@ button:active{
 
 <div id="lista"></div>
 
-<h2>📅 Calendario</h2>
-<div id="calendario"></div>
-
 </div>
 
 <script>
 
 let eventos = JSON.parse(localStorage.getItem("eventos")) || [];
 
-const nombreInput = document.getElementById("nombre");
-const fechaInput = document.getElementById("fecha");
+const nombre = document.getElementById("nombre");
+const fecha = document.getElementById("fecha");
 const buscar = document.getElementById("buscar");
 
 /* GUARDAR */
@@ -161,146 +124,116 @@ function guardar(){
 }
 
 /* DIAS */
-function diasFaltan(fecha){
-    const hoy = new Date();
-    hoy.setHours(0,0,0,0);
-
-    const e = new Date(fecha + "T00:00:00");
-    e.setHours(0,0,0,0);
-
-    return Math.ceil((e-hoy)/(1000*60*60*24));
+function diasFaltan(f){
+    return Math.ceil((new Date(f) - new Date()) / 86400000);
 }
 
-/* COLOR */
+/* 🎨 COLORES NUEVOS */
 function color(d){
-    if(d <= 0) return "rojo";
-    if(d <= 5) return "amarillo";
+
+    if(d <= 0){
+        return "rojo";
+    }
+
+    if(d >= 2 && d <= 5){
+        return "rojo";
+    }
+
+    if(d >= 6 && d <= 10){
+        return "amarillo";
+    }
+
     return "verde";
 }
 
-/* CONTADOR */
-function actualizarContador(){
-    const hoy = eventos.filter(e => diasFaltan(e.fecha) === 0).length;
-    document.getElementById("contador").innerHTML =
-        `📊 ${eventos.length} tareas • 🔥 ${hoy} para hoy`;
+/* 🔔 NOTIFICACIÓN */
+function notificar(texto){
+    if(Notification.permission === "granted"){
+        new Notification("📚 Calendario", {
+            body: texto
+        });
+    }
 }
 
-/* MOSTRAR */
+/* 📊 MOSTRAR */
 function mostrar(filtro=""){
 
-    let lista = document.getElementById("lista");
     let html = "";
 
     eventos.sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
 
-    eventos.forEach((e,i)=>{
+    eventos.forEach(e=>{
 
         if(!e.nombre.toLowerCase().includes(filtro)) return;
 
         let d = diasFaltan(e.fecha);
         let c = color(d);
 
-        let texto = d === 0 ? "🔥 HOY" : `⏳ ${d} días`;
+        let texto;
+
+        if(d <= 0){
+            texto = "🔥 HOY / VENCIDO";
+        }else if(d <= 5){
+            texto = `🚨 MUY PRÓXIMO (${d} días)`;
+        }else if(d <= 10){
+            texto = `⚠️ Próximo (${d} días)`;
+        }else{
+            texto = `🟢 Lejano (${d} días)`;
+        }
+
+        if(d === 0) notificar(e.nombre);
 
         html += `
         <div class="evento ${c}">
             ${e.nombre}<br>
             📅 ${e.fecha}<br>
             ${texto}
-            <button class="delete" onclick="eliminar(${i})">X</button>
         </div>`;
-
-        if(d === 0 && Notification.permission === "granted"){
-            new Notification("📚 Tarea para hoy", {
-                body: e.nombre
-            });
-        }
     });
 
-    lista.innerHTML = html;
+    document.getElementById("lista").innerHTML = html;
+
+    document.getElementById("contador").innerHTML =
+        `📊 ${eventos.length} tareas`;
 
     guardar();
-    renderCalendario();
-    actualizarContador();
 }
 
-/* ELIMINAR */
-function eliminar(i){
-    if(confirm("¿Eliminar evento?")){
-        eventos.splice(i,1);
-        mostrar(buscar.value.toLowerCase());
-    }
-}
-
-/* AGREGAR */
-document.getElementById("form").addEventListener("submit",e=>{
+/* ➕ AGREGAR */
+form.onsubmit = (e)=>{
     e.preventDefault();
 
     eventos.push({
-        nombre: nombreInput.value,
-        fecha: fechaInput.value
+        nombre:nombre.value,
+        fecha:fecha.value
     });
 
-    nombreInput.value="";
-    fechaInput.value="";
+    nombre.value="";
+    fecha.value="";
 
     mostrar();
-});
-
-/* BUSCAR */
-buscar.addEventListener("input",()=>{
-    mostrar(buscar.value.toLowerCase());
-});
-
-/* CALENDARIO */
-function renderCalendario(){
-
-    const cont = document.getElementById("calendario");
-    cont.innerHTML = "";
-
-    const hoy = new Date();
-    const mes = hoy.getMonth();
-    const año = hoy.getFullYear();
-
-    const primer = new Date(año,mes,1).getDay();
-    const diasMes = new Date(año,mes+1,0).getDate();
-
-    for(let i=0;i<primer;i++){
-        cont.innerHTML += `<div class="dia"></div>`;
-    }
-
-    for(let d=1; d<=diasMes; d++){
-
-        let fecha = `${año}-${String(mes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-
-        let ev = eventos.filter(e=>e.fecha===fecha);
-
-        let html = `<strong>${d}</strong>`;
-
-        ev.forEach(e=>{
-            html += `<div>${e.nombre}</div>`;
-        });
-
-        let clase = (d === hoy.getDate()) ? "dia hoy" : "dia";
-
-        cont.innerHTML += `<div class="${clase}">${html}</div>`;
-    }
 }
 
-/* EXPORTAR */
-function exportar(){
-    const blob = new Blob([JSON.stringify(eventos, null, 2)], {
-        type:"application/json"
-    });
+/* 🔍 BUSCAR */
+buscar.oninput = ()=>{
+    mostrar(buscar.value.toLowerCase());
+}
 
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+/* 📦 EXPORTAR */
+function exportar(){
+    let blob = new Blob(
+        [JSON.stringify(eventos,null,2)],
+        {type:"application/json"}
+    );
+
+    let url = URL.createObjectURL(blob);
+    let a = document.createElement("a");
     a.href = url;
-    a.download = "calendario.json";
+    a.download = "eventos.json";
     a.click();
 }
 
-/* NOTIFICACIONES */
+/* 🔔 PERMISO NOTIFICACIONES */
 Notification.requestPermission();
 
 /* INIT */
