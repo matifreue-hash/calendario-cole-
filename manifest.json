@@ -1,20 +1,25 @@
 {
-  "name": "Calendario Escolar",
+  "name": "Calendario Escolar Pro",
   "short_name": "Calendario",
-  "start_url": ".",
+  "description": "Gestioná tus tareas y exámenes escolares",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#1976d2",
+  "orientation": "portrait",
+  "background_color": "#eef2f7",
+  "theme_color": "#4a90e2",
+  "lang": "es",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "icon-512.png",
+      "src": "icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
