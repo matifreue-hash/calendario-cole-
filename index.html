@@ -2,646 +2,395 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Calendario Escolar Pro</title>
 
-<!-- PWA -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#4a90e2">
-<meta name="mobile-web-app-capable" content="yes">
-
-<!-- iOS (Safari no usa manifest para todo) -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Calendario">
-<link rel="apple-touch-icon" href="icon-192.png">
-
-<!-- Favicon -->
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <style>
-  *, *::before, *::after { box-sizing: border-box; }
+:root{
+  --bg:#0b1220;
+  --card:#111827;
+  --text:#e5e7eb;
+  --muted:#94a3b8;
+  --primary:#3b82f6;
+  --danger:#ef4444;
+  --warn:#f59e0b;
+  --ok:#22c55e;
+}
 
-  :root {
-    --bg: #eef2f7;
-    --card: #ffffff;
-    --primary: #4a90e2;
-    --primary-dark: #357abd;
-    --green: #34c759;
-    --red: #ff3b30;
-    --yellow: #ffb300;
-    --text: #1a1a2e;
-    --text-muted: #6b7280;
-    --radius: 14px;
-    --shadow: 0 2px 12px rgba(0,0,0,0.08);
-  }
+*{box-sizing:border-box;font-family:system-ui;}
 
-  body {
-    margin: 0;
-    font-family: "Segoe UI", system-ui, Arial, sans-serif;
-    background: linear-gradient(135deg, #eef2f7, #dfe7f3);
-    min-height: 100vh;
-    color: var(--text);
-    padding-bottom: 40px;
-  }
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+}
 
-  .app {
-    max-width: 720px;
-    margin: 0 auto;
-    padding: 20px 16px;
-  }
+/* TOP */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px;
+  background:#0a0f1c;
+  position:sticky;
+  top:0;
+}
 
-  /* ── HEADER ── */
-  .header {
-    text-align: center;
-    margin-bottom: 20px;
-  }
-  .header h1 {
-    margin: 0 0 4px;
-    font-size: clamp(1.4rem, 5vw, 2rem);
-    font-weight: 800;
-    letter-spacing: -0.5px;
-  }
-  #contador {
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    font-weight: 600;
-  }
+.topbar button{
+  background:none;
+  border:none;
+  color:white;
+  font-size:20px;
+  cursor:pointer;
+}
 
-  /* ── CARD ── */
-  .card {
-    background: var(--card);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: 16px;
-    margin-bottom: 16px;
-  }
+/* LAYOUT */
+.container{
+  max-width:900px;
+  margin:auto;
+  padding:10px;
+}
 
-  /* ── FORM ── */
-  .form-grid {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 10px;
-    align-items: end;
-  }
-  .form-fields {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-  @media (max-width: 480px) {
-    .form-fields {
-      grid-template-columns: 1fr;
-    }
-    .form-grid {
-      grid-template-columns: 1fr;
-    }
-  }
+/* MONTH NAV */
+.monthbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin:10px 0;
+}
 
-  .field {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .field label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
+/* GRID */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:6px;
+}
 
-  input[type="text"],
-  input[type="date"],
-  input[type="search"] {
-    width: 100%;
-    padding: 11px 14px;
-    border-radius: 10px;
-    border: 1.5px solid #e0e7ef;
-    font-size: 15px;
-    font-family: inherit;
-    background: #f8fafc;
-    color: var(--text);
-    transition: border-color 0.2s, box-shadow 0.2s;
-    /* Fix: prevent zoom on iOS */
-    font-size: 16px;
-  }
-  input[type="text"]:focus,
-  input[type="date"]:focus,
-  input[type="search"]:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(74,144,226,0.15);
-    background: #fff;
-  }
+.day{
+  background:#111827;
+  min-height:80px;
+  border-radius:10px;
+  padding:6px;
+  cursor:pointer;
+  transition:.2s;
+}
 
-  /* ── BUTTONS ── */
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 11px 20px;
-    border-radius: 10px;
-    border: none;
-    font-size: 15px;
-    font-family: inherit;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background 0.18s, transform 0.1s;
-    white-space: nowrap;
-  }
-  .btn:active { transform: scale(0.97); }
-  .btn-primary {
-    background: var(--primary);
-    color: #fff;
-    width: 100%;
-  }
-  .btn-primary:hover { background: var(--primary-dark); }
-  .btn-export {
-    background: var(--green);
-    color: #fff;
-    width: 100%;
-    margin-top: 4px;
-  }
-  .btn-export:hover { background: #28a745; }
-  .btn-delete {
-    background: #fff0f0;
-    color: var(--red);
-    border: 1.5px solid #ffd6d6;
-    padding: 5px 10px;
-    font-size: 13px;
-    font-weight: 700;
-    border-radius: 8px;
-    flex-shrink: 0;
-  }
-  .btn-delete:hover { background: var(--red); color: #fff; }
+.day:hover{
+  outline:2px solid var(--primary);
+}
 
-  /* ── SEARCH ── */
-  .search-wrap {
-    position: relative;
-    margin-bottom: 4px;
-  }
-  .search-wrap span {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 16px;
-    pointer-events: none;
-  }
-  #buscar {
-    padding-left: 38px;
-  }
+.badge{
+  display:block;
+  font-size:10px;
+  margin-top:3px;
+  padding:2px 4px;
+  border-radius:6px;
+  background:#1f2937;
+}
 
-  /* ── EVENTOS ── */
-  .evento {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 13px 14px;
-    border-radius: 12px;
-    margin-bottom: 10px;
-    font-weight: 600;
-    animation: aparecer 0.22s ease;
-    transition: transform 0.15s;
-  }
-  .evento:hover { transform: scale(1.01); }
-  .evento-info { flex: 1; min-width: 0; }
-  .evento-nombre {
-    font-size: 15px;
-    font-weight: 700;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .evento-meta {
-    font-size: 13px;
-    margin-top: 2px;
-    opacity: 0.8;
-  }
-  .evento-badge {
-    font-size: 12px;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 20px;
-    background: rgba(0,0,0,0.08);
-    white-space: nowrap;
-  }
+/* PRIORITY COLORS */
+.red{background:#7f1d1d;}
+.yellow{background:#78350f;}
+.green{background:#14532d;}
 
-  @keyframes aparecer {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
+/* SIDEBAR */
+.sidebar{
+  position:fixed;
+  left:-260px;
+  top:0;
+  width:260px;
+  height:100%;
+  background:#0a0f1c;
+  padding:15px;
+  transition:.3s;
+}
 
-  .rojo   { background: #ffd6d6; border-left: 5px solid var(--red); }
-  .amarillo{ background: #fff4c2; border-left: 5px solid var(--yellow); }
-  .verde  { background: #d6ffd6; border-left: 5px solid var(--green); }
+.sidebar.open{left:0;}
 
-  /* ── EMPTY STATE ── */
-  .empty {
-    text-align: center;
-    padding: 30px 0;
-    color: var(--text-muted);
-    font-size: 0.95rem;
-  }
-  .empty span { font-size: 2rem; display: block; margin-bottom: 8px; }
+.sidebar button{
+  width:100%;
+  margin-top:10px;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  background:#111827;
+  color:white;
+}
 
-  /* ── CALENDARIO ── */
-  .cal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-  }
-  .cal-header h2 { margin: 0; font-size: 1.1rem; }
+/* MODAL */
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  display:none;
+  justify-content:center;
+  align-items:center;
+}
 
-  .cal-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
-  }
-  .cal-day-label {
-    text-align: center;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--text-muted);
-    padding: 4px 0;
-    text-transform: uppercase;
-  }
-  .dia {
-    background: #f8fafc;
-    border-radius: 9px;
-    min-height: 52px;
-    padding: 5px;
-    font-size: 12px;
-    border: 1.5px solid transparent;
-    transition: border-color 0.15s;
-  }
-  .dia:hover { border-color: var(--primary); }
-  .dia strong { font-size: 13px; display: block; }
-  .hoy {
-    border-color: var(--primary) !important;
-    background: #e8f0fb;
-  }
-  .evento-mini {
-    font-size: 10px;
-    margin-top: 2px;
-    background: #e0e7ef;
-    border-radius: 4px;
-    padding: 1px 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-weight: 600;
-  }
+.modal.active{display:flex;}
 
-  /* Fix: eliminar 300ms delay en mobile para todos los botones */
-  button, .btn {
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-  }
-  input {
-    touch-action: manipulation;
-  }
+.box{
+  background:#111827;
+  padding:15px;
+  border-radius:10px;
+  width:300px;
+}
 
-  /* ── RESPONSIVE TABLET ── */
-  @media (min-width: 600px) {
-    .app { padding: 28px 24px; }
-  }
+input, select{
+  width:100%;
+  padding:10px;
+  margin-top:8px;
+  border-radius:8px;
+  border:none;
+}
+
+/* LIST */
+.list{
+  margin-top:10px;
+}
+
+.task{
+  background:#111827;
+  padding:10px;
+  border-radius:10px;
+  margin-bottom:8px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.small{
+  font-size:12px;
+  color:var(--muted);
+}
+
 </style>
 </head>
+
 <body>
-<div class="app">
 
-  <!-- Header -->
-  <div class="header">
-    <h1>📚 Calendario Escolar</h1>
-    <div id="contador"></div>
+<!-- TOP -->
+<div class="topbar">
+  <button onclick="toggleSidebar()">☰</button>
+  <div>
+    <button onclick="openAlarms()">⏰</button>
+    <button onclick="openSettings()">⚙️</button>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <h3>Menú</h3>
+  <button onclick="toggleSidebar()">Cerrar</button>
+  <button onclick="view='home';render()">Inicio</button>
+  <button onclick="view='tasks';render()">Tareas</button>
+</div>
+
+<div class="container">
+
+  <div class="monthbar">
+    <button onclick="prevMonth()">◀</button>
+    <h2 id="title"></h2>
+    <button onclick="nextMonth()">▶</button>
   </div>
 
-  <!-- Buscador -->
-  <div class="card">
-    <div class="search-wrap">
-      <span>🔍</span>
-      <input type="search" id="buscar" placeholder="Buscar eventos..." autocomplete="off">
-    </div>
-  </div>
+  <div id="calendar" class="grid"></div>
 
-  <!-- Formulario: SIN <form>, usa div para evitar recargas en móvil -->
-  <div class="card">
-    <div class="form-fields">
-      <div class="field">
-        <label for="nombre">Tarea o examen</label>
-        <input type="text" id="nombre" placeholder="Ej: Parcial de Matemática" autocomplete="off">
-      </div>
-      <div class="field">
-        <label>Fecha</label>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;" id="fecha-wrap">
-          <select id="fecha-dia" style="padding:11px 6px;border-radius:10px;border:1.5px solid #e0e7ef;font-size:16px;font-family:inherit;background:#f8fafc;color:#1a1a2e;touch-action:manipulation;-webkit-appearance:none;appearance:none;text-align:center;">
-            <option value="">Día</option>
-          </select>
-          <select id="fecha-mes" style="padding:11px 6px;border-radius:10px;border:1.5px solid #e0e7ef;font-size:16px;font-family:inherit;background:#f8fafc;color:#1a1a2e;touch-action:manipulation;-webkit-appearance:none;appearance:none;text-align:center;">
-            <option value="">Mes</option>
-            <option value="01">Enero</option>
-            <option value="02">Febrero</option>
-            <option value="03">Marzo</option>
-            <option value="04">Abril</option>
-            <option value="05">Mayo</option>
-            <option value="06">Junio</option>
-            <option value="07">Julio</option>
-            <option value="08">Agosto</option>
-            <option value="09">Septiembre</option>
-            <option value="10">Octubre</option>
-            <option value="11">Noviembre</option>
-            <option value="12">Diciembre</option>
-          </select>
-          <select id="fecha-anio" style="padding:11px 6px;border-radius:10px;border:1.5px solid #e0e7ef;font-size:16px;font-family:inherit;background:#f8fafc;color:#1a1a2e;touch-action:manipulation;-webkit-appearance:none;appearance:none;text-align:center;">
-            <option value="">Año</option>
-          </select>
-        </div>
-      </div>
-    </div>
-    <div style="margin-top:12px;">
-      <button class="btn btn-primary" id="btnAgregar">＋ Agregar</button>
-    </div>
-    <div id="form-error" style="color:var(--red);font-size:13px;margin-top:8px;display:none;"></div>
-  </div>
-
-  <!-- Exportar -->
-  <button class="btn btn-export" id="exportar">⬇ Exportar datos</button>
-
-  <!-- Lista -->
-  <div id="lista" style="margin-top:16px;"></div>
-
-  <!-- Calendario -->
-  <div class="card" style="margin-top:8px;">
-    <div class="cal-header">
-      <h2>📅 Calendario del mes</h2>
-    </div>
-    <div class="cal-grid" id="cal-labels"></div>
-    <div class="cal-grid" id="calendario"></div>
-  </div>
+  <div id="taskList" class="list"></div>
 
 </div>
 
+<!-- MODAL TASK -->
+<div class="modal" id="modal">
+  <div class="box">
+    <h3>Nueva tarea</h3>
+    <input id="taskName" placeholder="Nombre">
+    <button onclick="saveTask()">Guardar</button>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="modal" id="settings">
+  <div class="box">
+    <h3>Ajustes</h3>
+
+    <label>Días antes de aviso</label>
+    <select id="daysBefore">
+      <option value="1">1 día</option>
+      <option value="3">3 días</option>
+      <option value="7">7 días</option>
+    </select>
+
+    <button onclick="saveSettings()">Guardar</button>
+  </div>
+</div>
+
 <script>
-  // ── Estado ──
-  let eventos = [];
-  try {
-    eventos = JSON.parse(localStorage.getItem("eventos")) || [];
-  } catch(e) {
-    eventos = [];
+
+/* DATA */
+let eventos = JSON.parse(localStorage.getItem("eventos")||"[]");
+let settings = JSON.parse(localStorage.getItem("settings")||"{}");
+
+if(!settings.daysBefore) settings.daysBefore=1;
+
+let date = new Date();
+let selectedDate=null;
+let view="home";
+
+/* RENDER */
+function render(){
+
+  if(view==="tasks"){
+    renderTasks();
+    return;
   }
 
-  const elNombre = document.getElementById("nombre");
-  // Fecha mínima no necesaria con dropdowns
-  // Función para obtener la fecha en formato YYYY-MM-DD
-  function getFechaValue() {
-    const d = document.getElementById("fecha-dia").value;
-    const m = document.getElementById("fecha-mes").value;
-    const a = document.getElementById("fecha-anio").value;
-    if (!d || !m || !a) return "";
-    return a + "-" + m + "-" + d.padStart(2,"0");
-  }
-  function resetFecha() {
-    document.getElementById("fecha-dia").value = "";
-    document.getElementById("fecha-mes").value = "";
-    document.getElementById("fecha-anio").value = "";
-  }
-  const elBuscar = document.getElementById("buscar");
-  const elError  = document.getElementById("form-error");
+  const cal = document.getElementById("calendar");
+  cal.innerHTML="";
 
+  const y=date.getFullYear();
+  const m=date.getMonth();
 
-  // ── Poblar días y años ──
-  (function() {
-    const selDia = document.getElementById("fecha-dia");
-    const selAnio = document.getElementById("fecha-anio");
-    for (let d = 1; d <= 31; d++) {
-      const o = document.createElement("option");
-      o.value = String(d).padStart(2,"0");
-      o.textContent = d;
-      selDia.appendChild(o);
-    }
-    const hoy = new Date();
-    for (let y = hoy.getFullYear(); y <= hoy.getFullYear() + 3; y++) {
-      const o = document.createElement("option");
-      o.value = y;
-      o.textContent = y;
-      selAnio.appendChild(o);
-    }
-    // Preseleccionar año actual
-    selAnio.value = hoy.getFullYear();
-  })();
+  document.getElementById("title").innerText =
+    date.toLocaleString('es',{month:'long',year:'numeric'});
 
-  // ── Guardar ──
-  function guardar() {
-    try {
-      localStorage.setItem("eventos", JSON.stringify(eventos));
-    } catch(e) {}
-  }
+  const first=new Date(y,m,1).getDay();
+  const days=new Date(y,m+1,0).getDate();
 
-  // ── Días que faltan ──
-  function diasFaltan(f) {
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    const ev = new Date(f + "T00:00:00");
-    return Math.ceil((ev - hoy) / 86400000);
-  }
+  for(let i=0;i<first;i++) cal.innerHTML+="<div></div>";
 
-  // ── Color por urgencia ──
-  function colorClase(d) {
-    if (d <= 5)  return "rojo";
-    if (d <= 10) return "amarillo";
-    return "verde";
-  }
+  for(let d=1;d<=days;d++){
 
-  // ── Notificación ──
-  function notificar(texto) {
-    if (Notification && Notification.permission === "granted") {
-      new Notification("📚 Calendario", { body: texto });
-    }
-  }
+    let f=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
 
-  // ── Mostrar lista ──
-  function mostrar(filtro = "") {
-    const lista = document.getElementById("lista");
-    eventos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+    let ev=eventos.filter(e=>e.fecha===f);
 
-    const filtrados = filtro
-      ? eventos.filter(e => e.nombre.toLowerCase().includes(filtro))
-      : eventos;
+    let html=`<strong>${d}</strong>`;
 
-    if (filtrados.length === 0) {
-      lista.innerHTML = `
-        <div class="empty">
-          <span>${filtro ? "🔎" : "📋"}</span>
-          ${filtro ? "No hay resultados para esa búsqueda." : "Todavía no hay tareas. ¡Agregá una!"}
-        </div>`;
-    } else {
-      lista.innerHTML = filtrados.map((e, i) => {
-        const idxReal = eventos.indexOf(e);
-        const d = diasFaltan(e.fecha);
-        const c = colorClase(d);
-        let badge;
-        if (d < 0)       badge = "✅ Pasado";
-        else if (d === 0) badge = "🔥 HOY";
-        else if (d <= 5)  badge = `🚨 ${d}d`;
-        else if (d <= 10) badge = `⚠️ ${d}d`;
-        else              badge = `🟢 ${d}d`;
-
-        if (d === 0) notificar(e.nombre);
-
-        // Formatear fecha legible
-        const [yy, mm, dd] = e.fecha.split("-");
-        const fechaLeg = `${dd}/${mm}/${yy}`;
-
-        return `
-          <div class="evento ${c}">
-            <div class="evento-info">
-              <div class="evento-nombre">${escapeHTML(e.nombre)}</div>
-              <div class="evento-meta">📅 ${fechaLeg}</div>
-            </div>
-            <span class="evento-badge">${badge}</span>
-            <button class="btn btn-delete" onclick="eliminar(${idxReal})" aria-label="Eliminar">✕</button>
-          </div>`;
-      }).join("");
-    }
-
-    document.getElementById("contador").textContent =
-      `📊 ${eventos.length} tarea${eventos.length !== 1 ? "s" : ""}`;
-
-    renderCalendario();
-  }
-
-  // ── Eliminar ──
-  function eliminar(i) {
-    eventos.splice(i, 1);
-    guardar();
-    mostrar(elBuscar.value.toLowerCase());
-  }
-
-  // ── Agregar (botón, no form submit) ──
-  function agregarEvento() {
-    const nom = elNombre.value.trim();
-    const fec = getFechaValue();
-
-    if (!nom) {
-      mostrarError("Escribí el nombre de la tarea o examen.");
-      elNombre.focus();
-      return;
-    }
-    if (!fec) {
-      mostrarError("Seleccioná una fecha.");
-      // fecha focus no aplica con dropdowns
-      return;
-    }
-
-    elError.style.display = "none";
-    eventos.push({ nombre: nom, fecha: fec });
-    guardar();
-    elNombre.value = "";
-    resetFecha();
-    mostrar(elBuscar.value.toLowerCase());
-    elNombre.focus();
-  }
-
-  // Soporte click Y touch para el botón Agregar (fix mobile)
-  const btnAgregar = document.getElementById("btnAgregar");
-  btnAgregar.addEventListener("click", agregarEvento);
-  btnAgregar.addEventListener("touchend", function(e) {
-    e.preventDefault(); // evita el doble disparo click+touch en mobile
-    agregarEvento();
-  });
-
-  // ── Enter en los inputs también agrega ──
-  elNombre.addEventListener("keydown", e => { if (e.key === "Enter") agregarEvento(); });
-  // fecha dropdowns no necesitan keydown
-
-  function mostrarError(msg) {
-    elError.textContent = msg;
-    elError.style.display = "block";
-    setTimeout(() => elError.style.display = "none", 3000);
-  }
-
-  // ── Buscar ──
-  elBuscar.addEventListener("input", () => {
-    mostrar(elBuscar.value.toLowerCase());
-  });
-
-  // ── Exportar ──
-  document.getElementById("exportar").addEventListener("click", () => {
-    const blob = new Blob([JSON.stringify(eventos, null, 2)], { type: "application/json" });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement("a");
-    a.href     = url;
-    a.download = "eventos.json";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  });
-
-  // ── Calendario ──
-  function renderCalendario() {
-    const labelsEl = document.getElementById("cal-labels");
-    const cont     = document.getElementById("calendario");
-
-    // Cabecera de días
-    const dias = ["Do","Lu","Ma","Mi","Ju","Vi","Sa"];
-    labelsEl.innerHTML = dias.map(d =>
-      `<div class="cal-day-label">${d}</div>`
-    ).join("");
-
-    cont.innerHTML = "";
-    const hoy    = new Date();
-    const mes    = hoy.getMonth();
-    const año    = hoy.getFullYear();
-    const primer = new Date(año, mes, 1).getDay(); // domingo=0
-    const diasMes = new Date(año, mes + 1, 0).getDate();
-
-    // Celdas vacías al inicio
-    for (let i = 0; i < primer; i++) {
-      cont.innerHTML += `<div class="dia" style="background:transparent;border-color:transparent;"></div>`;
-    }
-
-    for (let d = 1; d <= diasMes; d++) {
-      const fechaStr = `${año}-${String(mes + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-      const ev = eventos.filter(e => e.fecha === fechaStr);
-      const esHoy = d === hoy.getDate();
-
-      let html = `<strong>${d}</strong>`;
-      ev.forEach(e => {
-        html += `<div class="evento-mini">${escapeHTML(e.nombre)}</div>`;
-      });
-
-      cont.innerHTML += `<div class="dia${esHoy ? " hoy" : ""}">${html}</div>`;
-    }
-  }
-
-  // ── Escape HTML para prevenir XSS ──
-  function escapeHTML(str) {
-    return str.replace(/[&<>"']/g, m => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-    }[m]));
-  }
-
-  // ── Notificaciones ──
-  if (Notification && Notification.permission !== "denied") {
-    Notification.requestPermission();
-  }
-
-  // ── Init ──
-  mostrar();
-
-  // ── Registrar Service Worker (PWA) ──
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./sw.js")
-        .then(() => console.log("SW registrado ✓"))
-        .catch(err => console.warn("SW error:", err));
+    ev.forEach(e=>{
+      let cls=getColor(e.fecha);
+      html+=`<span class="badge ${cls}">${e.nombre}</span>`;
     });
+
+    cal.innerHTML+=`
+      <div class="day" onclick="create('${f}')">
+        ${html}
+      </div>`;
   }
+}
+
+/* COLOR LOGIC */
+function getColor(fecha){
+  let diff=(new Date(fecha)-new Date())/86400000;
+
+  if(diff<=2) return "red";
+  if(diff<=5) return "yellow";
+  return "green";
+}
+
+/* CREATE */
+function create(f){
+  selectedDate=f;
+  document.getElementById("modal").classList.add("active");
+}
+
+/* SAVE TASK */
+function saveTask(){
+  let name=document.getElementById("taskName").value;
+
+  eventos.push({nombre:name,fecha:selectedDate});
+
+  localStorage.setItem("eventos",JSON.stringify(eventos));
+
+  document.getElementById("modal").classList.remove("active");
+
+  render();
+}
+
+/* TASK LIST */
+function renderTasks(){
+  const list=document.getElementById("taskList");
+  list.innerHTML="";
+
+  eventos.forEach((e,i)=>{
+    list.innerHTML+=`
+      <div class="task">
+        <div>
+          <b>${e.nombre}</b>
+          <div class="small">${e.fecha}</div>
+        </div>
+        <button onclick="del(${i})">✕</button>
+      </div>`;
+  });
+}
+
+/* DELETE */
+function del(i){
+  eventos.splice(i,1);
+  localStorage.setItem("eventos",JSON.stringify(eventos));
+  render();
+}
+
+/* MONTH */
+function nextMonth(){date.setMonth(date.getMonth()+1);render();}
+function prevMonth(){date.setMonth(date.getMonth()-1);render();}
+
+/* SIDEBAR */
+function toggleSidebar(){
+  document.getElementById("sidebar").classList.toggle("open");
+}
+
+/* SETTINGS */
+function openSettings(){
+  document.getElementById("settings").classList.add("active");
+}
+
+function saveSettings(){
+  settings.daysBefore=document.getElementById("daysBefore").value;
+  localStorage.setItem("settings",JSON.stringify(settings));
+  document.getElementById("settings").classList.remove("active");
+}
+
+/* ALARMS */
+function openAlarms(){
+  alert("Base de alarmas lista (siguiente upgrade: push real)");
+}
+
+/* NOTIFICATIONS */
+if("Notification" in window && Notification.permission!=="denied"){
+  Notification.requestPermission();
+}
+
+/* CHECK ALERTS */
+setInterval(()=>{
+
+  eventos.forEach(e=>{
+    let diff=(new Date(e.fecha)-new Date())/86400000;
+
+    if(diff<=settings.daysBefore && diff>0){
+
+      if(Notification.permission==="granted"){
+        new Notification("📚 Recordatorio",{
+          body:e.nombre+" es pronto"
+        });
+      }
+    }
+
+    if(Math.floor(diff)===0){
+      if(Notification.permission==="granted"){
+        new Notification("🔥 HOY",{
+          body:e.nombre
+        });
+      }
+    }
+
+  });
+
+},60000);
+
+render();
+
 </script>
+
 </body>
 </html>
