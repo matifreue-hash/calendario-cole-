@@ -11,10 +11,7 @@
   --text:#0f172a;
 }
 
-*{
-  box-sizing:border-box;
-  font-family:system-ui;
-}
+*{box-sizing:border-box;font-family:system-ui;}
 
 body{
   margin:0;
@@ -37,14 +34,14 @@ body{
   padding:10px;
 }
 
-/* HEADER CAL */
+/* HEADER */
 .header{
   display:flex;
   justify-content:space-between;
   align-items:center;
 }
 
-/* CALENDAR GRID */
+/* CALENDAR */
 .grid{
   display:grid;
   grid-template-columns:repeat(7,1fr);
@@ -126,7 +123,7 @@ input,select{
   margin-top:8px;
 }
 
-/* SAVE BUTTON */
+/* BUTTON PRO */
 .save-btn{
   background: linear-gradient(135deg, #2563eb, #1d4ed8);
   color:white;
@@ -151,7 +148,6 @@ input,select{
 
 .slider{
   position:absolute;
-  cursor:pointer;
   inset:0;
   background:#94a3b8;
   border-radius:34px;
@@ -257,7 +253,7 @@ input,select{
 
 <script>
 
-/* SAFE STORAGE */
+/* SAFE DATA */
 let eventos = [];
 try{
   eventos = JSON.parse(localStorage.getItem("e")) || [];
@@ -265,15 +261,17 @@ try{
   eventos = [];
 }
 
-let settings = {};
+/* SETTINGS */
+let settings = {days:1};
 try{
   settings = JSON.parse(localStorage.getItem("s")) || {days:1};
 }catch(e){
   settings = {days:1};
 }
 
-/* ALARMA ON POR DEFECTO */
+/* MUTED (ON POR DEFECTO) */
 let muted = localStorage.getItem("muted");
+
 if(muted === null){
   muted = false;
   localStorage.setItem("muted","false");
@@ -288,14 +286,18 @@ let selected = null;
 window.addEventListener("DOMContentLoaded", ()=>{
   const el = document.getElementById("muteToggle");
   if(el) el.checked = !muted;
+
+  render();
 });
 
-/* RENDER SAFE */
+/* SAFE RENDER */
 function render(){
 
   try{
 
     const cal = document.getElementById("cal");
+    const title = document.getElementById("title");
+
     if(!cal) return;
 
     cal.innerHTML = "";
@@ -303,8 +305,10 @@ function render(){
     const y = date.getFullYear();
     const m = date.getMonth();
 
-    document.getElementById("title").innerText =
-    date.toLocaleString("es",{month:"long",year:"numeric"});
+    if(title){
+      title.innerText =
+      date.toLocaleString("es",{month:"long",year:"numeric"});
+    }
 
     const first = new Date(y,m,1).getDay();
     const days = new Date(y,m+1,0).getDate();
@@ -315,9 +319,9 @@ function render(){
 
     for(let d=1; d<=days; d++){
 
-      let f = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const f = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
 
-      let ev = eventos.filter(e => e.fecha === f);
+      const ev = (eventos || []).filter(e => e.fecha === f);
 
       let html = `<strong>${d}</strong>`;
 
@@ -334,7 +338,7 @@ function render(){
     renderList();
 
   }catch(err){
-    console.error("Render error:",err);
+    console.error("RENDER ERROR:",err);
   }
 }
 
@@ -356,7 +360,6 @@ function renderList(){
         <button onclick="del(${i})">✕</button>
       </div>`;
   });
-
 }
 
 /* TASK */
@@ -366,16 +369,24 @@ function openTask(f){
 }
 
 function save(){
-  let n = document.getElementById("name").value;
 
-  if(!n || !selected) return;
+  try{
 
-  eventos.push({nombre:n,fecha:selected});
-  localStorage.setItem("e",JSON.stringify(eventos));
+    let n = document.getElementById("name").value;
 
-  document.getElementById("modal").classList.remove("active");
+    if(!n || !selected) return;
 
-  render();
+    eventos.push({nombre:n,fecha:selected});
+
+    localStorage.setItem("e",JSON.stringify(eventos));
+
+    document.getElementById("modal").classList.remove("active");
+
+    render();
+
+  }catch(e){
+    console.error("SAVE ERROR:",e);
+  }
 }
 
 /* DELETE */
@@ -427,9 +438,6 @@ function setCal(v){
     d.style.opacity = v;
   });
 }
-
-/* INIT */
-window.addEventListener("DOMContentLoaded", render);
 
 </script>
 
