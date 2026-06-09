@@ -1,1 +1,280 @@
-<!DOCTYPE html> <html lang="es"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Calendario Escolar</title> <link rel="manifest" href="manifest.json"> <style> body{ font-family: Arial, sans-serif; background:#f2f4f8; margin:0; padding:20px; } h1{text-align:center;margin-top:60px;} /* SPLASH */ #splash{ position:fixed; top:0;left:0; width:100%;height:100%; background:#f2f4f8; display:flex; justify-content:center; align-items:center; z-index:9999; animation:fadeOut 2s forwards; animation-delay:1.5s; } @keyframes fadeOut{ to{opacity:0;visibility:hidden;} } /* FORM */ form{ background:white; padding:15px; border-radius:12px; margin-bottom:15px; } input,button{ width:100%; padding:10px; margin-top:8px; } /* EVENTOS */ .evento{ margin-top:10px; padding:12px; border-radius:10px; position:relative; font-weight:bold; } .rojo{background:#ffd6d6;border-left:5px solid red;} .amarillo{background:#fff4c2;border-left:5px solid orange;} .verde{background:#d6ffd6;border-left:5px solid green;} button.delete{ position:absolute; right:10px; top:10px; width:auto; } /* CALENDARIO */ #calendario{ display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-top:20px; } .dia{ background:white; padding:8px; border-radius:8px; min-height:60px; font-size:12px; } .dia strong{display:block;} .evento-mini{ background:#ffd6d6; font-size:10px; margin-top:3px; padding:2px; border-radius:5px; } </style> </head> <body> <!-- SPLASH --> <div id="splash"> <h1>📚 Calendario Escolar</h1> </div> <h1>📚 Calendario Escolar</h1> <!-- FORM --> <form id="form"> <input id="nombre" placeholder="Tarea o examen" required> <input type="date" id="fecha" required> <button>Agregar</button> </form> <!-- LISTA --> <div id="lista"></div> <!-- CALENDARIO --> <h2>📅 Calendario</h2> <div id="calendario"></div> <!-- MUSICA --> <audio id="musica" loop> <source src="https://cdn.pixabay.com/download/audio/2022/10/16/audio_7c8b1c1c7d.mp3?filename=soft-piano-ambient-118602.mp3"> </audio> <script> let eventos = JSON.parse(localStorage.getItem("eventos")) || []; /* GUARDAR */ function guardar(){ localStorage.setItem("eventos", JSON.stringify(eventos)); } /* DIAS */ function diasFaltan(fecha){ const hoy = new Date(); hoy.setHours(0,0,0,0); const e = new Date(fecha); e.setHours(0,0,0,0); return Math.ceil((e-hoy)/(1000*60*60*24)); } /* COLOR */ function color(d){ if(d<=5) return "rojo"; if(d<=10) return "amarillo"; return "verde"; } /* MOSTRAR LISTA */ function mostrar(){ let lista = document.getElementById("lista"); lista.innerHTML = ""; eventos.sort((a,b)=>new Date(a.fecha)-new Date(b.fecha)); eventos.forEach((e,i)=>{ let d = diasFaltan(e.fecha); let c = color(d); let texto = d===0 ? "🔥 Hoy" : ⏳ ${d} días; lista.innerHTML += <div class="evento ${c}"> ${e.nombre}<br> 📅 ${e.fecha}<br> ${texto} <button class="delete" onclick="eliminar(${i})">❌</button> </div>; }); guardar(); renderCalendario(); } /* ELIMINAR */ function eliminar(i){ eventos.splice(i,1); mostrar(); } /* AGREGAR */ document.getElementById("form").addEventListener("submit",e=>{ e.preventDefault(); eventos.push({ nombre:nombre.value, fecha:fecha.value }); nombre.value=""; fecha.value=""; mostrar(); }); /* CALENDARIO VISUAL */ function renderCalendario(){ const cont = document.getElementById("calendario"); cont.innerHTML = ""; const hoy = new Date(); const mes = hoy.getMonth(); const año = hoy.getFullYear(); const primer = new Date(año,mes,1).getDay(); const diasMes = new Date(año,mes+1,0).getDate(); for(let i=0;i<primer;i++){ cont.innerHTML += <div class="dia"></div>; } for(let d=1; d<=diasMes; d++){ let fecha = ${año}-${String(mes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}; let ev = eventos.filter(e=>e.fecha===fecha); let html = <strong>${d}</strong>; ev.forEach(e=>{ html += <div class="evento-mini">${e.nombre}</div>; }); cont.innerHTML += <div class="dia">${html}</div>; } } /* MUSICA */ const musica = document.getElementById("musica"); document.addEventListener("click",()=>{ musica.volume = 0.3; musica.play(); },{once:true}); /* INIT */ mostrar(); </script> </body> </html>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calendario Escolar</title>
+
+<link rel="manifest" href="manifest.json">
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#f2f4f8;
+    margin:0;
+    padding:20px;
+}
+
+h1{
+    text-align:center;
+    margin-top:60px;
+}
+
+/* SPLASH */
+#splash{
+    position:fixed;
+    top:0;left:0;
+    width:100%;height:100%;
+    background:#f2f4f8;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    animation:fadeOut 2s forwards;
+    animation-delay:1.5s;
+}
+
+@keyframes fadeOut{
+    to{opacity:0;visibility:hidden;}
+}
+
+/* FORM */
+form{
+    background:white;
+    padding:15px;
+    border-radius:12px;
+    margin-bottom:15px;
+}
+
+input,button{
+    width:100%;
+    padding:10px;
+    margin-top:8px;
+}
+
+/* EVENTOS */
+.evento{
+    margin-top:10px;
+    padding:12px;
+    border-radius:10px;
+    position:relative;
+    font-weight:bold;
+}
+
+/* COLORES NUEVOS */
+.rojo{
+    background:#ffd6d6;
+    border-left:5px solid #ff3b30;
+}
+
+.amarillo{
+    background:#fff4c2;
+    border-left:5px solid #ffb300;
+}
+
+.verde{
+    background:#d6ffd6;
+    border-left:5px solid #34c759;
+}
+
+button.delete{
+    position:absolute;
+    right:10px;
+    top:10px;
+    width:auto;
+}
+
+/* CALENDARIO */
+#calendario{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:5px;
+    margin-top:20px;
+}
+
+.dia{
+    background:white;
+    padding:8px;
+    border-radius:8px;
+    min-height:60px;
+    font-size:12px;
+}
+
+.dia strong{display:block;}
+
+.evento-mini{
+    background:#ffd6d6;
+    font-size:10px;
+    margin-top:3px;
+    padding:2px;
+    border-radius:5px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+    <h1>📚 Calendario Escolar</h1>
+</div>
+
+<h1>📚 Calendario Escolar</h1>
+
+<!-- FORM -->
+<form id="form">
+    <input id="nombre" placeholder="Tarea o examen" required>
+    <input type="date" id="fecha" required>
+    <button>Agregar</button>
+</form>
+
+<!-- LISTA -->
+<div id="lista"></div>
+
+<!-- CALENDARIO -->
+<h2>📅 Calendario</h2>
+<div id="calendario"></div>
+
+<!-- MUSICA -->
+<audio id="musica" loop>
+    <source src="https://cdn.pixabay.com/download/audio/2022/10/16/audio_7c8b1c1c7d.mp3?filename=soft-piano-ambient-118602.mp3">
+</audio>
+
+<script>
+
+let eventos = JSON.parse(localStorage.getItem("eventos")) || [];
+
+/* GUARDAR */
+function guardar(){
+    localStorage.setItem("eventos", JSON.stringify(eventos));
+}
+
+/* DIAS */
+function diasFaltan(fecha){
+    const hoy = new Date();
+    hoy.setHours(0,0,0,0);
+
+    const e = new Date(fecha);
+    e.setHours(0,0,0,0);
+
+    return Math.ceil((e - hoy) / (1000 * 60 * 60 * 24));
+}
+
+/* COLOR NUEVO */
+function color(d){
+
+    if(d <= 0) return "rojo";        // hoy o vencido
+    if(d >= 2 && d <= 5) return "rojo";
+    if(d >= 6 && d <= 10) return "amarillo";
+    return "verde";                  // 11+
+}
+
+/* MOSTRAR LISTA */
+function mostrar(){
+
+    let lista = document.getElementById("lista");
+    let html = "";
+
+    eventos.sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
+
+    eventos.forEach((e,i)=>{
+
+        let d = diasFaltan(e.fecha);
+        let c = color(d);
+
+        let texto = "";
+
+        if(d <= 0){
+            texto = "🔥 HOY / VENCIDO";
+        }else if(d <= 5){
+            texto = `🚨 MUY PRÓXIMO (${d} días)`;
+        }else if(d <= 10){
+            texto = `⚠️ Próximo (${d} días)`;
+        }else{
+            texto = `🟢 Lejano (${d} días)`;
+        }
+
+        html += `
+        <div class="evento ${c}">
+            ${e.nombre}<br>
+            📅 ${e.fecha}<br>
+            ${texto}
+            <button class="delete" onclick="eliminar(${i})">❌</button>
+        </div>`;
+    });
+
+    lista.innerHTML = html;
+
+    guardar();
+    renderCalendario();
+}
+
+/* ELIMINAR */
+function eliminar(i){
+    eventos.splice(i,1);
+    mostrar();
+}
+
+/* AGREGAR */
+document.getElementById("form").addEventListener("submit",e=>{
+    e.preventDefault();
+
+    eventos.push({
+        nombre:nombre.value,
+        fecha:fecha.value
+    });
+
+    nombre.value="";
+    fecha.value="";
+
+    mostrar();
+});
+
+/* CALENDARIO */
+function renderCalendario(){
+
+    const cont = document.getElementById("calendario");
+    cont.innerHTML = "";
+
+    const hoy = new Date();
+    const mes = hoy.getMonth();
+    const año = hoy.getFullYear();
+
+    const primer = new Date(año,mes,1).getDay();
+    const diasMes = new Date(año,mes+1,0).getDate();
+
+    for(let i=0;i<primer;i++){
+        cont.innerHTML += `<div class="dia"></div>`;
+    }
+
+    for(let d=1; d<=diasMes; d++){
+
+        let fecha = `${año}-${String(mes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+
+        let ev = eventos.filter(e=>e.fecha===fecha);
+
+        let html = `<strong>${d}</strong>`;
+
+        ev.forEach(e=>{
+            html += `<div class="evento-mini">${e.nombre}</div>`;
+        });
+
+        cont.innerHTML += `<div class="dia">${html}</div>`;
+    }
+}
+
+/* MUSICA */
+const musica = document.getElementById("musica");
+
+document.addEventListener("click",()=>{
+    musica.volume = 0.3;
+    musica.play();
+},{once:true});
+
+/* INIT */
+mostrar();
+
+</script>
+
+</body>
+</html>
