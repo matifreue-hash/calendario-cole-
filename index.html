@@ -11,7 +11,10 @@
   --text:#0f172a;
 }
 
-*{box-sizing:border-box;font-family:system-ui;}
+*{
+  box-sizing:border-box;
+  font-family:system-ui;
+}
 
 body{
   margin:0;
@@ -19,7 +22,7 @@ body{
   transition:.3s;
 }
 
-/* TOP BAR */
+/* TOP */
 .topbar{
   display:flex;
   justify-content:space-between;
@@ -34,13 +37,14 @@ body{
   padding:10px;
 }
 
-/* CALENDAR */
+/* HEADER CAL */
 .header{
   display:flex;
   justify-content:space-between;
   align-items:center;
 }
 
+/* CALENDAR GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(7,1fr);
@@ -91,6 +95,7 @@ body{
   color:white;
   padding:15px;
   transition:.3s;
+  z-index:1000;
 }
 
 .sidebar.open{left:0;}
@@ -103,6 +108,7 @@ body{
   display:none;
   justify-content:center;
   align-items:center;
+  z-index:2000;
 }
 
 .modal.active{display:flex;}
@@ -120,22 +126,20 @@ input,select{
   margin-top:8px;
 }
 
-/* SAVE BUTTON PRO */
+/* SAVE BUTTON */
 .save-btn{
   background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  color: white;
-  border: none;
-  padding: 12px 22px;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  min-width: 140px;
-  box-shadow: 0 6px 15px rgba(37,99,235,0.35);
-  transition: all 0.2s ease;
+  color:white;
+  border:none;
+  padding:12px 22px;
+  border-radius:12px;
+  font-size:15px;
+  font-weight:700;
+  cursor:pointer;
+  min-width:140px;
 }
 
-/* SWITCH MODERNO */
+/* SWITCH */
 .switch{
   position:relative;
   display:inline-block;
@@ -143,31 +147,27 @@ input,select{
   height:28px;
 }
 
-.switch input{
-  opacity:0;
-  width:0;
-  height:0;
-}
+.switch input{display:none;}
 
 .slider{
   position:absolute;
   cursor:pointer;
-  top:0; left:0; right:0; bottom:0;
+  inset:0;
   background:#94a3b8;
-  transition:.3s;
   border-radius:34px;
+  transition:.3s;
 }
 
 .slider:before{
-  position:absolute;
   content:"";
+  position:absolute;
   height:20px;
   width:20px;
   left:4px;
   bottom:4px;
   background:white;
-  transition:.3s;
   border-radius:50%;
+  transition:.3s;
 }
 
 .switch input:checked + .slider{
@@ -227,7 +227,7 @@ input,select{
 
 </div>
 
-<!-- MODAL TASK -->
+<!-- MODAL -->
 <div class="modal" id="modal">
   <div class="box">
     <h3>Nueva tarea</h3>
@@ -257,65 +257,97 @@ input,select{
 
 <script>
 
-/* DATA */
-let eventos = JSON.parse(localStorage.getItem("e")||"[]");
-let settings = JSON.parse(localStorage.getItem("s")||"{days:1}");
-let muted = JSON.parse(localStorage.getItem("muted")||"false");
+/* SAFE STORAGE */
+let eventos = [];
+try{
+  eventos = JSON.parse(localStorage.getItem("e")) || [];
+}catch(e){
+  eventos = [];
+}
+
+let settings = {};
+try{
+  settings = JSON.parse(localStorage.getItem("s")) || {days:1};
+}catch(e){
+  settings = {days:1};
+}
+
+/* ALARMA ON POR DEFECTO */
+let muted = localStorage.getItem("muted");
+if(muted === null){
+  muted = false;
+  localStorage.setItem("muted","false");
+}else{
+  muted = JSON.parse(muted);
+}
 
 let date = new Date();
 let selected = null;
 
 /* INIT SWITCH */
-window.addEventListener("load", ()=>{
-  document.getElementById("muteToggle").checked = !muted;
+window.addEventListener("DOMContentLoaded", ()=>{
+  const el = document.getElementById("muteToggle");
+  if(el) el.checked = !muted;
 });
 
-/* RENDER */
+/* RENDER SAFE */
 function render(){
 
-  const cal=document.getElementById("cal");
-  cal.innerHTML="";
+  try{
 
-  const y=date.getFullYear();
-  const m=date.getMonth();
+    const cal = document.getElementById("cal");
+    if(!cal) return;
 
-  document.getElementById("title").innerText=
-  date.toLocaleString("es",{month:"long",year:"numeric"});
+    cal.innerHTML = "";
 
-  const first=new Date(y,m,1).getDay();
-  const days=new Date(y,m+1,0).getDate();
+    const y = date.getFullYear();
+    const m = date.getMonth();
 
-  for(let i=0;i<first;i++) cal.innerHTML+="<div></div>";
+    document.getElementById("title").innerText =
+    date.toLocaleString("es",{month:"long",year:"numeric"});
 
-  for(let d=1;d<=days;d++){
+    const first = new Date(y,m,1).getDay();
+    const days = new Date(y,m+1,0).getDate();
 
-    let f=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    for(let i=0;i<first;i++){
+      cal.innerHTML += "<div></div>";
+    }
 
-    let ev=eventos.filter(e=>e.fecha===f);
+    for(let d=1; d<=days; d++){
 
-    let html=`<strong>${d}</strong>`;
+      let f = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
 
-    ev.forEach(e=>{
-      html+=`<span class="badge">${e.nombre}</span>`;
-    });
+      let ev = eventos.filter(e => e.fecha === f);
 
-    cal.innerHTML+=`
-      <div class="day" onclick="openTask('${f}')">
-        ${html}
-      </div>`;
+      let html = `<strong>${d}</strong>`;
+
+      ev.forEach(e=>{
+        html += `<span class="badge">${e.nombre}</span>`;
+      });
+
+      cal.innerHTML += `
+        <div class="day" onclick="openTask('${f}')">
+          ${html}
+        </div>`;
+    }
+
+    renderList();
+
+  }catch(err){
+    console.error("Render error:",err);
   }
-
-  renderList();
 }
 
 /* LIST */
 function renderList(){
 
-  const list=document.getElementById("taskList");
-  list.innerHTML="";
+  const list = document.getElementById("taskList");
+  if(!list) return;
+
+  list.innerHTML = "";
 
   eventos.forEach((e,i)=>{
-    list.innerHTML+=`
+    list.innerHTML += `
       <div class="task">
         <div>
           <b>${e.nombre}</b>
@@ -329,12 +361,14 @@ function renderList(){
 
 /* TASK */
 function openTask(f){
-  selected=f;
+  selected = f;
   document.getElementById("modal").classList.add("active");
 }
 
 function save(){
-  let n=document.getElementById("name").value;
+  let n = document.getElementById("name").value;
+
+  if(!n || !selected) return;
 
   eventos.push({nombre:n,fecha:selected});
   localStorage.setItem("e",JSON.stringify(eventos));
@@ -370,12 +404,12 @@ function openSettings(){
 }
 
 function saveSettings(){
-  settings.days=document.getElementById("days").value;
+  settings.days = document.getElementById("days").value;
   localStorage.setItem("s",JSON.stringify(settings));
   document.getElementById("settings").classList.remove("active");
 }
 
-/* SWITCH LOGIC */
+/* SWITCH */
 function toggleMute(){
   muted = !document.getElementById("muteToggle").checked;
   localStorage.setItem("muted",JSON.stringify(muted));
@@ -384,17 +418,18 @@ function toggleMute(){
 /* SLIDERS */
 function setBg(v){
   document.querySelectorAll(".day").forEach(d=>{
-    d.style.background=`rgba(17,24,39,${v})`;
+    d.style.background = `rgba(17,24,39,${v})`;
   });
 }
 
 function setCal(v){
   document.querySelectorAll(".day").forEach(d=>{
-    d.style.opacity=v;
+    d.style.opacity = v;
   });
 }
 
-render();
+/* INIT */
+window.addEventListener("DOMContentLoaded", render);
 
 </script>
 
