@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Calendario Escolar Pro</title>
 
 <!-- PWA -->
@@ -296,6 +296,15 @@
     font-weight: 600;
   }
 
+  /* Fix: eliminar 300ms delay en mobile para todos los botones */
+  button, .btn {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  input {
+    touch-action: manipulation;
+  }
+
   /* ── RESPONSIVE TABLET ── */
   @media (min-width: 600px) {
     .app { padding: 28px 24px; }
@@ -460,7 +469,7 @@
   }
 
   // ── Agregar (botón, no form submit) ──
-  document.getElementById("btnAgregar").addEventListener("click", function() {
+  function agregarEvento() {
     const nom = elNombre.value.trim();
     const fec = elFecha.value;
 
@@ -482,11 +491,20 @@
     elFecha.value  = "";
     mostrar(elBuscar.value.toLowerCase());
     elNombre.focus();
+  }
+
+  // Soporte click Y touch para el botón Agregar (fix mobile)
+  const btnAgregar = document.getElementById("btnAgregar");
+  btnAgregar.addEventListener("click", agregarEvento);
+  btnAgregar.addEventListener("touchend", function(e) {
+    e.preventDefault(); // evita el doble disparo click+touch en mobile
+    agregarEvento();
   });
 
   // ── Enter en los inputs también agrega ──
-  elNombre.addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("btnAgregar").click(); });
-  elFecha.addEventListener("keydown",  e => { if (e.key === "Enter") document.getElementById("btnAgregar").click(); });
+  elNombre.addEventListener("keydown", e => { if (e.key === "Enter") agregarEvento(); });
+  elFecha.addEventListener("keydown",  e => { if (e.key === "Enter") agregarEvento(); });
+  elFecha.addEventListener("change", () => { elError.style.display = "none"; });
 
   function mostrarError(msg) {
     elError.textContent = msg;
