@@ -336,8 +336,30 @@
         <input type="text" id="nombre" placeholder="Ej: Parcial de Matemática" autocomplete="off">
       </div>
       <div class="field">
-        <label for="fecha">Fecha</label>
-        <input type="date" id="fecha">
+        <label>Fecha</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;" id="fecha-wrap">
+          <select id="fecha-dia" style="padding:11px 6px;border-radius:10px;border:1.5px solid #e0e7ef;font-size:16px;font-family:inherit;background:#f8fafc;color:#1a1a2e;touch-action:manipulation;-webkit-appearance:none;appearance:none;text-align:center;">
+            <option value="">Día</option>
+          </select>
+          <select id="fecha-mes" style="padding:11px 6px;border-radius:10px;border:1.5px solid #e0e7ef;font-size:16px;font-family:inherit;background:#f8fafc;color:#1a1a2e;touch-action:manipulation;-webkit-appearance:none;appearance:none;text-align:center;">
+            <option value="">Mes</option>
+            <option value="01">Enero</option>
+            <option value="02">Febrero</option>
+            <option value="03">Marzo</option>
+            <option value="04">Abril</option>
+            <option value="05">Mayo</option>
+            <option value="06">Junio</option>
+            <option value="07">Julio</option>
+            <option value="08">Agosto</option>
+            <option value="09">Septiembre</option>
+            <option value="10">Octubre</option>
+            <option value="11">Noviembre</option>
+            <option value="12">Diciembre</option>
+          </select>
+          <select id="fecha-anio" style="padding:11px 6px;border-radius:10px;border:1.5px solid #e0e7ef;font-size:16px;font-family:inherit;background:#f8fafc;color:#1a1a2e;touch-action:manipulation;-webkit-appearance:none;appearance:none;text-align:center;">
+            <option value="">Año</option>
+          </select>
+        </div>
       </div>
     </div>
     <div style="margin-top:12px;">
@@ -373,13 +395,44 @@
   }
 
   const elNombre = document.getElementById("nombre");
-  const elFecha  = document.getElementById("fecha");
+  // Fecha mínima no necesaria con dropdowns
+  // Función para obtener la fecha en formato YYYY-MM-DD
+  function getFechaValue() {
+    const d = document.getElementById("fecha-dia").value;
+    const m = document.getElementById("fecha-mes").value;
+    const a = document.getElementById("fecha-anio").value;
+    if (!d || !m || !a) return "";
+    return a + "-" + m + "-" + d.padStart(2,"0");
+  }
+  function resetFecha() {
+    document.getElementById("fecha-dia").value = "";
+    document.getElementById("fecha-mes").value = "";
+    document.getElementById("fecha-anio").value = "";
+  }
   const elBuscar = document.getElementById("buscar");
   const elError  = document.getElementById("form-error");
 
-  // Fecha mínima = hoy
-  const hoyISO = new Date().toISOString().split("T")[0];
-  elFecha.setAttribute("min", hoyISO);
+
+  // ── Poblar días y años ──
+  (function() {
+    const selDia = document.getElementById("fecha-dia");
+    const selAnio = document.getElementById("fecha-anio");
+    for (let d = 1; d <= 31; d++) {
+      const o = document.createElement("option");
+      o.value = String(d).padStart(2,"0");
+      o.textContent = d;
+      selDia.appendChild(o);
+    }
+    const hoy = new Date();
+    for (let y = hoy.getFullYear(); y <= hoy.getFullYear() + 3; y++) {
+      const o = document.createElement("option");
+      o.value = y;
+      o.textContent = y;
+      selAnio.appendChild(o);
+    }
+    // Preseleccionar año actual
+    selAnio.value = hoy.getFullYear();
+  })();
 
   // ── Guardar ──
   function guardar() {
@@ -471,7 +524,7 @@
   // ── Agregar (botón, no form submit) ──
   function agregarEvento() {
     const nom = elNombre.value.trim();
-    const fec = elFecha.value;
+    const fec = getFechaValue();
 
     if (!nom) {
       mostrarError("Escribí el nombre de la tarea o examen.");
@@ -480,7 +533,7 @@
     }
     if (!fec) {
       mostrarError("Seleccioná una fecha.");
-      elFecha.focus();
+      // fecha focus no aplica con dropdowns
       return;
     }
 
@@ -488,7 +541,7 @@
     eventos.push({ nombre: nom, fecha: fec });
     guardar();
     elNombre.value = "";
-    elFecha.value  = "";
+    resetFecha();
     mostrar(elBuscar.value.toLowerCase());
     elNombre.focus();
   }
@@ -503,8 +556,7 @@
 
   // ── Enter en los inputs también agrega ──
   elNombre.addEventListener("keydown", e => { if (e.key === "Enter") agregarEvento(); });
-  elFecha.addEventListener("keydown",  e => { if (e.key === "Enter") agregarEvento(); });
-  elFecha.addEventListener("change", () => { elError.style.display = "none"; });
+  // fecha dropdowns no necesitan keydown
 
   function mostrarError(msg) {
     elError.textContent = msg;
