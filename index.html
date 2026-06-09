@@ -2,332 +2,553 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Calendario Escolar Pro</title>
-
 <style>
-body{
-    margin:0;
-    font-family: "Segoe UI", Arial;
-    background: linear-gradient(135deg,#eef2f7,#dfe7f3);
-}
+  *, *::before, *::after { box-sizing: border-box; }
 
-/* APP */
-.app{
-    max-width:520px;
-    margin:auto;
-    padding:16px;
-}
+  :root {
+    --bg: #eef2f7;
+    --card: #ffffff;
+    --primary: #4a90e2;
+    --primary-dark: #357abd;
+    --green: #34c759;
+    --red: #ff3b30;
+    --yellow: #ffb300;
+    --text: #1a1a2e;
+    --text-muted: #6b7280;
+    --radius: 14px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
 
-/* TITULO */
-h1{
-    text-align:center;
-    margin-bottom:10px;
-}
+  body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, Arial, sans-serif;
+    background: linear-gradient(135deg, #eef2f7, #dfe7f3);
+    min-height: 100vh;
+    color: var(--text);
+    padding-bottom: 40px;
+  }
 
-/* INPUTS */
-input,button{
-    width:100%;
-    padding:10px;
-    margin-top:8px;
-    border-radius:12px;
-    border:1px solid #ddd;
-    font-size:14px;
-}
+  .app {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px 16px;
+  }
 
-button{
-    background:#4a90e2;
-    color:white;
-    border:none;
-    font-weight:bold;
-}
+  /* ── HEADER ── */
+  .header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .header h1 {
+    margin: 0 0 4px;
+    font-size: clamp(1.4rem, 5vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  #contador {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
 
-/* CONTADOR */
-#contador{
-    text-align:center;
-    font-weight:bold;
-    margin:10px 0;
-}
+  /* ── CARD ── */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
 
-/* BUSCADOR */
-#buscar{
-    margin-bottom:10px;
-}
+  /* ── FORM ── */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: end;
+  }
+  .form-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  @media (max-width: 480px) {
+    .form-fields {
+      grid-template-columns: 1fr;
+    }
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+  }
 
-/* EVENTOS */
-.evento{
-    margin-top:10px;
-    padding:12px;
-    border-radius:14px;
-    position:relative;
-    font-weight:bold;
-    animation: aparecer 0.25s ease;
-    transition:0.2s;
-}
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .field label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
 
-.evento:hover{
-    transform:scale(1.02);
-}
+  input[type="text"],
+  input[type="date"],
+  input[type="search"] {
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: 10px;
+    border: 1.5px solid #e0e7ef;
+    font-size: 15px;
+    font-family: inherit;
+    background: #f8fafc;
+    color: var(--text);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    /* Fix: prevent zoom on iOS */
+    font-size: 16px;
+  }
+  input[type="text"]:focus,
+  input[type="date"]:focus,
+  input[type="search"]:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(74,144,226,0.15);
+    background: #fff;
+  }
 
-@keyframes aparecer{
-    from{opacity:0; transform:translateY(10px);}
-    to{opacity:1; transform:translateY(0);}
-}
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 11px 20px;
+    border-radius: 10px;
+    border: none;
+    font-size: 15px;
+    font-family: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.18s, transform 0.1s;
+    white-space: nowrap;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+    width: 100%;
+  }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-export {
+    background: var(--green);
+    color: #fff;
+    width: 100%;
+    margin-top: 4px;
+  }
+  .btn-export:hover { background: #28a745; }
+  .btn-delete {
+    background: #fff0f0;
+    color: var(--red);
+    border: 1.5px solid #ffd6d6;
+    padding: 5px 10px;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+  .btn-delete:hover { background: var(--red); color: #fff; }
 
-/* COLORES PRO */
-.rojo{
-    background:#ffd6d6;
-    border-left:6px solid #ff3b30;
-}
+  /* ── SEARCH ── */
+  .search-wrap {
+    position: relative;
+    margin-bottom: 4px;
+  }
+  .search-wrap span {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    pointer-events: none;
+  }
+  #buscar {
+    padding-left: 38px;
+  }
 
-.amarillo{
-    background:#fff4c2;
-    border-left:6px solid #ffb300;
-}
+  /* ── EVENTOS ── */
+  .evento {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 13px 14px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    font-weight: 600;
+    animation: aparecer 0.22s ease;
+    transition: transform 0.15s;
+  }
+  .evento:hover { transform: scale(1.01); }
+  .evento-info { flex: 1; min-width: 0; }
+  .evento-nombre {
+    font-size: 15px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .evento-meta {
+    font-size: 13px;
+    margin-top: 2px;
+    opacity: 0.8;
+  }
+  .evento-badge {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: rgba(0,0,0,0.08);
+    white-space: nowrap;
+  }
 
-.verde{
-    background:#d6ffd6;
-    border-left:6px solid #34c759;
-}
+  @keyframes aparecer {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
 
-/* BORRAR */
-.delete{
-    position:absolute;
-    right:10px;
-    top:10px;
-    background:#ff4d4d;
-    border:none;
-    color:white;
-    border-radius:8px;
-    width:auto;
-    padding:5px 8px;
-}
+  .rojo   { background: #ffd6d6; border-left: 5px solid var(--red); }
+  .amarillo{ background: #fff4c2; border-left: 5px solid var(--yellow); }
+  .verde  { background: #d6ffd6; border-left: 5px solid var(--green); }
 
-/* CALENDARIO */
-#calendario{
-    display:grid;
-    grid-template-columns:repeat(7,1fr);
-    gap:5px;
-    margin-top:20px;
-}
+  /* ── EMPTY STATE ── */
+  .empty {
+    text-align: center;
+    padding: 30px 0;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+  .empty span { font-size: 2rem; display: block; margin-bottom: 8px; }
 
-.dia{
-    background:white;
-    padding:8px;
-    border-radius:10px;
-    min-height:55px;
-    font-size:12px;
-}
+  /* ── CALENDARIO ── */
+  .cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .cal-header h2 { margin: 0; font-size: 1.1rem; }
 
-.hoy{
-    border:2px solid #4a90e2;
-}
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+  .cal-day-label {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    padding: 4px 0;
+    text-transform: uppercase;
+  }
+  .dia {
+    background: #f8fafc;
+    border-radius: 9px;
+    min-height: 52px;
+    padding: 5px;
+    font-size: 12px;
+    border: 1.5px solid transparent;
+    transition: border-color 0.15s;
+  }
+  .dia:hover { border-color: var(--primary); }
+  .dia strong { font-size: 13px; display: block; }
+  .hoy {
+    border-color: var(--primary) !important;
+    background: #e8f0fb;
+  }
+  .evento-mini {
+    font-size: 10px;
+    margin-top: 2px;
+    background: #e0e7ef;
+    border-radius: 4px;
+    padding: 1px 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 600;
+  }
 
-.evento-mini{
-    font-size:10px;
-    margin-top:2px;
-    background:#eee;
-    border-radius:4px;
-    padding:2px;
-}
-
-/* BOTON EXPORT */
-#exportar{
-    margin-top:10px;
-    background:#34c759;
-}
+  /* ── RESPONSIVE TABLET ── */
+  @media (min-width: 600px) {
+    .app { padding: 28px 24px; }
+  }
 </style>
 </head>
-
 <body>
-
 <div class="app">
 
-<h1>📚 Calendario Escolar</h1>
+  <!-- Header -->
+  <div class="header">
+    <h1>📚 Calendario Escolar</h1>
+    <div id="contador"></div>
+  </div>
 
-<div id="contador"></div>
+  <!-- Buscador -->
+  <div class="card">
+    <div class="search-wrap">
+      <span>🔍</span>
+      <input type="search" id="buscar" placeholder="Buscar eventos..." autocomplete="off">
+    </div>
+  </div>
 
-<input id="buscar" placeholder="🔍 Buscar eventos...">
+  <!-- Formulario: SIN <form>, usa div para evitar recargas en móvil -->
+  <div class="card">
+    <div class="form-fields">
+      <div class="field">
+        <label for="nombre">Tarea o examen</label>
+        <input type="text" id="nombre" placeholder="Ej: Parcial de Matemática" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="fecha">Fecha</label>
+        <input type="date" id="fecha">
+      </div>
+    </div>
+    <div style="margin-top:12px;">
+      <button class="btn btn-primary" id="btnAgregar">＋ Agregar</button>
+    </div>
+    <div id="form-error" style="color:var(--red);font-size:13px;margin-top:8px;display:none;"></div>
+  </div>
 
-<form id="form">
-    <input id="nombre" placeholder="Tarea o examen" required>
-    <input type="date" id="fecha" required>
-    <button>Agregar</button>
-</form>
+  <!-- Exportar -->
+  <button class="btn btn-export" id="exportar">⬇ Exportar datos</button>
 
-<button id="exportar">⬇ Exportar datos</button>
+  <!-- Lista -->
+  <div id="lista" style="margin-top:16px;"></div>
 
-<div id="lista"></div>
-
-<h2>📅 Calendario</h2>
-<div id="calendario"></div>
+  <!-- Calendario -->
+  <div class="card" style="margin-top:8px;">
+    <div class="cal-header">
+      <h2>📅 Calendario del mes</h2>
+    </div>
+    <div class="cal-grid" id="cal-labels"></div>
+    <div class="cal-grid" id="calendario"></div>
+  </div>
 
 </div>
 
 <script>
+  // ── Estado ──
+  let eventos = [];
+  try {
+    eventos = JSON.parse(localStorage.getItem("eventos")) || [];
+  } catch(e) {
+    eventos = [];
+  }
 
-let eventos = JSON.parse(localStorage.getItem("eventos")) || [];
+  const elNombre = document.getElementById("nombre");
+  const elFecha  = document.getElementById("fecha");
+  const elBuscar = document.getElementById("buscar");
+  const elError  = document.getElementById("form-error");
 
-const nombre = document.getElementById("nombre");
-const fecha = document.getElementById("fecha");
-const buscar = document.getElementById("buscar");
+  // Fecha mínima = hoy
+  const hoyISO = new Date().toISOString().split("T")[0];
+  elFecha.setAttribute("min", hoyISO);
 
-/* GUARDAR */
-function guardar(){
-    localStorage.setItem("eventos", JSON.stringify(eventos));
-}
+  // ── Guardar ──
+  function guardar() {
+    try {
+      localStorage.setItem("eventos", JSON.stringify(eventos));
+    } catch(e) {}
+  }
 
-/* DIAS */
-function diasFaltan(f){
+  // ── Días que faltan ──
+  function diasFaltan(f) {
     const hoy = new Date();
-    hoy.setHours(0,0,0,0);
+    hoy.setHours(0, 0, 0, 0);
+    const ev = new Date(f + "T00:00:00");
+    return Math.ceil((ev - hoy) / 86400000);
+  }
 
-    const e = new Date(f + "T00:00:00");
-    return Math.ceil((e - hoy)/86400000);
-}
-
-/* COLORES INTELIGENTES */
-function color(d){
-    if(d <= 5) return "rojo";
-    if(d <= 10) return "amarillo";
+  // ── Color por urgencia ──
+  function colorClase(d) {
+    if (d <= 5)  return "rojo";
+    if (d <= 10) return "amarillo";
     return "verde";
-}
+  }
 
-/* NOTIFICACIÓN */
-function notificar(texto){
-    if(Notification.permission === "granted"){
-        new Notification("📚 Calendario", {body:texto});
+  // ── Notificación ──
+  function notificar(texto) {
+    if (Notification && Notification.permission === "granted") {
+      new Notification("📚 Calendario", { body: texto });
     }
-}
+  }
 
-/* MOSTRAR */
-function mostrar(filtro=""){
+  // ── Mostrar lista ──
+  function mostrar(filtro = "") {
+    const lista = document.getElementById("lista");
+    eventos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
-    let html = "";
+    const filtrados = filtro
+      ? eventos.filter(e => e.nombre.toLowerCase().includes(filtro))
+      : eventos;
 
-    eventos.sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
-
-    eventos.forEach((e,i)=>{
-
-        if(!e.nombre.toLowerCase().includes(filtro)) return;
-
-        let d = diasFaltan(e.fecha);
-        let c = color(d);
-
-        let texto;
-
-        if(d <= 0){
-            texto = "🔥 HOY";
-        }else if(d <= 5){
-            texto = `🚨 ${d} días`;
-        }else if(d <= 10){
-            texto = `⚠️ ${d} días`;
-        }else{
-            texto = `🟢 ${d} días`;
-        }
-
-        if(d === 0) notificar(e.nombre);
-
-        html += `
-        <div class="evento ${c}">
-            ${e.nombre}<br>
-            📅 ${e.fecha}<br>
-            ${texto}
-            <button class="delete" onclick="eliminar(${i})">X</button>
+    if (filtrados.length === 0) {
+      lista.innerHTML = `
+        <div class="empty">
+          <span>${filtro ? "🔎" : "📋"}</span>
+          ${filtro ? "No hay resultados para esa búsqueda." : "Todavía no hay tareas. ¡Agregá una!"}
         </div>`;
-    });
+    } else {
+      lista.innerHTML = filtrados.map((e, i) => {
+        const idxReal = eventos.indexOf(e);
+        const d = diasFaltan(e.fecha);
+        const c = colorClase(d);
+        let badge;
+        if (d < 0)       badge = "✅ Pasado";
+        else if (d === 0) badge = "🔥 HOY";
+        else if (d <= 5)  badge = `🚨 ${d}d`;
+        else if (d <= 10) badge = `⚠️ ${d}d`;
+        else              badge = `🟢 ${d}d`;
 
-    document.getElementById("lista").innerHTML = html;
+        if (d === 0) notificar(e.nombre);
 
-    document.getElementById("contador").innerHTML =
-        `📊 ${eventos.length} tareas`;
+        // Formatear fecha legible
+        const [yy, mm, dd] = e.fecha.split("-");
+        const fechaLeg = `${dd}/${mm}/${yy}`;
 
-    guardar();
+        return `
+          <div class="evento ${c}">
+            <div class="evento-info">
+              <div class="evento-nombre">${escapeHTML(e.nombre)}</div>
+              <div class="evento-meta">📅 ${fechaLeg}</div>
+            </div>
+            <span class="evento-badge">${badge}</span>
+            <button class="btn btn-delete" onclick="eliminar(${idxReal})" aria-label="Eliminar">✕</button>
+          </div>`;
+      }).join("");
+    }
+
+    document.getElementById("contador").textContent =
+      `📊 ${eventos.length} tarea${eventos.length !== 1 ? "s" : ""}`;
+
     renderCalendario();
-}
+  }
 
-/* ELIMINAR */
-function eliminar(i){
-    eventos.splice(i,1);
-    mostrar(buscar.value.toLowerCase());
-}
+  // ── Eliminar ──
+  function eliminar(i) {
+    eventos.splice(i, 1);
+    guardar();
+    mostrar(elBuscar.value.toLowerCase());
+  }
 
-/* AGREGAR */
-document.getElementById("form").addEventListener("submit",e=>{
-    e.preventDefault();
+  // ── Agregar (botón, no form submit) ──
+  document.getElementById("btnAgregar").addEventListener("click", function() {
+    const nom = elNombre.value.trim();
+    const fec = elFecha.value;
 
-    eventos.push({
-        nombre:nombre.value,
-        fecha:fecha.value
-    });
+    if (!nom) {
+      mostrarError("Escribí el nombre de la tarea o examen.");
+      elNombre.focus();
+      return;
+    }
+    if (!fec) {
+      mostrarError("Seleccioná una fecha.");
+      elFecha.focus();
+      return;
+    }
 
-    nombre.value="";
-    fecha.value="";
+    elError.style.display = "none";
+    eventos.push({ nombre: nom, fecha: fec });
+    guardar();
+    elNombre.value = "";
+    elFecha.value  = "";
+    mostrar(elBuscar.value.toLowerCase());
+    elNombre.focus();
+  });
 
-    mostrar();
-});
+  // ── Enter en los inputs también agrega ──
+  elNombre.addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("btnAgregar").click(); });
+  elFecha.addEventListener("keydown",  e => { if (e.key === "Enter") document.getElementById("btnAgregar").click(); });
 
-/* BUSCAR */
-buscar.addEventListener("input",()=>{
-    mostrar(buscar.value.toLowerCase());
-});
+  function mostrarError(msg) {
+    elError.textContent = msg;
+    elError.style.display = "block";
+    setTimeout(() => elError.style.display = "none", 3000);
+  }
 
-/* EXPORTAR */
-document.getElementById("exportar").onclick = ()=>{
-    const blob = new Blob(
-        [JSON.stringify(eventos,null,2)],
-        {type:"application/json"}
-    );
+  // ── Buscar ──
+  elBuscar.addEventListener("input", () => {
+    mostrar(elBuscar.value.toLowerCase());
+  });
 
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
+  // ── Exportar ──
+  document.getElementById("exportar").addEventListener("click", () => {
+    const blob = new Blob([JSON.stringify(eventos, null, 2)], { type: "application/json" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
     a.download = "eventos.json";
+    document.body.appendChild(a);
     a.click();
-};
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
 
-/* CALENDARIO */
-function renderCalendario(){
+  // ── Calendario ──
+  function renderCalendario() {
+    const labelsEl = document.getElementById("cal-labels");
+    const cont     = document.getElementById("calendario");
 
-    const cont = document.getElementById("calendario");
+    // Cabecera de días
+    const dias = ["Do","Lu","Ma","Mi","Ju","Vi","Sa"];
+    labelsEl.innerHTML = dias.map(d =>
+      `<div class="cal-day-label">${d}</div>`
+    ).join("");
+
     cont.innerHTML = "";
+    const hoy    = new Date();
+    const mes    = hoy.getMonth();
+    const año    = hoy.getFullYear();
+    const primer = new Date(año, mes, 1).getDay(); // domingo=0
+    const diasMes = new Date(año, mes + 1, 0).getDate();
 
-    const hoy = new Date();
-    const mes = hoy.getMonth();
-    const año = hoy.getFullYear();
-
-    const primer = new Date(año,mes,1).getDay();
-    const diasMes = new Date(año,mes+1,0).getDate();
-
-    for(let i=0;i<primer;i++){
-        cont.innerHTML += `<div class="dia"></div>`;
+    // Celdas vacías al inicio
+    for (let i = 0; i < primer; i++) {
+      cont.innerHTML += `<div class="dia" style="background:transparent;border-color:transparent;"></div>`;
     }
 
-    for(let d=1; d<=diasMes; d++){
+    for (let d = 1; d <= diasMes; d++) {
+      const fechaStr = `${año}-${String(mes + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      const ev = eventos.filter(e => e.fecha === fechaStr);
+      const esHoy = d === hoy.getDate();
 
-        let fechaStr = `${año}-${String(mes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      let html = `<strong>${d}</strong>`;
+      ev.forEach(e => {
+        html += `<div class="evento-mini">${escapeHTML(e.nombre)}</div>`;
+      });
 
-        let ev = eventos.filter(e=>e.fecha===fechaStr);
-
-        let html = `<strong>${d}</strong>`;
-
-        ev.forEach(e=>{
-            html += `<div class="evento-mini">${e.nombre}</div>`;
-        });
-
-        let clase = (d === hoy.getDate()) ? "dia hoy" : "dia";
-
-        cont.innerHTML += `<div class="${clase}">${html}</div>`;
+      cont.innerHTML += `<div class="dia${esHoy ? " hoy" : ""}">${html}</div>`;
     }
-}
+  }
 
-/* NOTIFICACIONES */
-Notification.requestPermission();
+  // ── Escape HTML para prevenir XSS ──
+  function escapeHTML(str) {
+    return str.replace(/[&<>"']/g, m => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[m]));
+  }
 
-/* INIT */
-mostrar();
+  // ── Notificaciones ──
+  if (Notification && Notification.permission !== "denied") {
+    Notification.requestPermission();
+  }
 
+  // ── Init ──
+  mostrar();
 </script>
-
 </body>
 </html>
