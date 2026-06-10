@@ -7,14 +7,14 @@
 
 <style>
 :root{
-  --bg:#0f172a;
+  --bg:#0b1220;
   --card:#111827;
+  --text:#e5e7eb;
   --muted:#94a3b8;
   --primary:#3b82f6;
   --danger:#ef4444;
   --warn:#f59e0b;
   --ok:#22c55e;
-  --text:#e5e7eb;
 }
 
 *{box-sizing:border-box;font-family:system-ui;}
@@ -25,13 +25,13 @@ body{
   color:var(--text);
 }
 
-/* TOP BAR */
+/* TOP */
 .topbar{
   display:flex;
   justify-content:space-between;
   align-items:center;
   padding:12px;
-  background:#0b1220;
+  background:#0a0f1c;
   position:sticky;
   top:0;
 }
@@ -48,19 +48,15 @@ body{
 .container{
   max-width:900px;
   margin:auto;
-  padding:12px;
+  padding:10px;
 }
 
-/* CALENDAR HEADER */
-.cal-header{
+/* MONTH NAV */
+.monthbar{
   display:flex;
   justify-content:space-between;
   align-items:center;
   margin:10px 0;
-}
-
-.cal-header h2{
-  margin:0;
 }
 
 /* GRID */
@@ -76,6 +72,7 @@ body{
   border-radius:10px;
   padding:6px;
   cursor:pointer;
+  transition:.2s;
 }
 
 .day:hover{
@@ -83,13 +80,15 @@ body{
 }
 
 .badge{
-  font-size:10px;
   display:block;
+  font-size:10px;
   margin-top:3px;
   padding:2px 4px;
   border-radius:6px;
+  background:#1f2937;
 }
 
+/* PRIORITY COLORS */
 .red{background:#7f1d1d;}
 .yellow{background:#78350f;}
 .green{background:#14532d;}
@@ -97,68 +96,80 @@ body{
 /* SIDEBAR */
 .sidebar{
   position:fixed;
-  top:0;
   left:-260px;
+  top:0;
   width:260px;
   height:100%;
-  background:#0b1220;
+  background:#0a0f1c;
   padding:15px;
-  transition:0.3s;
+  transition:.3s;
 }
 
-.sidebar.open{
-  left:0;
-}
-
-.sidebar h3{
-  margin-top:0;
-}
+.sidebar.open{left:0;}
 
 .sidebar button{
   width:100%;
   margin-top:10px;
   padding:10px;
-  background:#111827;
-  color:white;
   border:none;
   border-radius:8px;
+  background:#111827;
+  color:white;
 }
 
 /* MODAL */
 .modal{
   position:fixed;
-  top:0;left:0;
-  width:100%;height:100%;
-  background:rgba(0,0,0,0.6);
+  inset:0;
+  background:rgba(0,0,0,.6);
   display:none;
   justify-content:center;
   align-items:center;
 }
 
-.modal.active{
-  display:flex;
-}
+.modal.active{display:flex;}
 
-.modal-box{
+.box{
   background:#111827;
   padding:15px;
   border-radius:10px;
   width:300px;
 }
 
-input{
+input, select{
   width:100%;
   padding:10px;
   margin-top:8px;
   border-radius:8px;
   border:none;
 }
+
+/* LIST */
+.list{
+  margin-top:10px;
+}
+
+.task{
+  background:#111827;
+  padding:10px;
+  border-radius:10px;
+  margin-bottom:8px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.small{
+  font-size:12px;
+  color:var(--muted);
+}
+
 </style>
 </head>
 
 <body>
 
-<!-- TOP BAR -->
+<!-- TOP -->
 <div class="topbar">
   <button onclick="toggleSidebar()">☰</button>
   <div>
@@ -170,90 +181,124 @@ input{
 <!-- SIDEBAR -->
 <div class="sidebar" id="sidebar">
   <h3>Menú</h3>
-  <button onclick="closeSidebar()">Cerrar</button>
-  <button>Inicio</button>
-  <button>Alarmas</button>
-  <button>Ajustes</button>
+  <button onclick="toggleSidebar()">Cerrar</button>
+  <button onclick="view='home';render()">Inicio</button>
+  <button onclick="view='tasks';render()">Tareas</button>
 </div>
 
 <div class="container">
 
-  <!-- CALENDAR HEADER -->
-  <div class="cal-header">
+  <div class="monthbar">
     <button onclick="prevMonth()">◀</button>
-    <h2 id="monthTitle"></h2>
+    <h2 id="title"></h2>
     <button onclick="nextMonth()">▶</button>
   </div>
 
-  <!-- CALENDAR -->
-  <div class="grid" id="calendar"></div>
+  <div id="calendar" class="grid"></div>
+
+  <div id="taskList" class="list"></div>
 
 </div>
 
-<!-- MODAL -->
+<!-- MODAL TASK -->
 <div class="modal" id="modal">
-  <div class="modal-box">
+  <div class="box">
     <h3>Nueva tarea</h3>
     <input id="taskName" placeholder="Nombre">
     <button onclick="saveTask()">Guardar</button>
   </div>
 </div>
 
+<!-- SETTINGS -->
+<div class="modal" id="settings">
+  <div class="box">
+    <h3>Ajustes</h3>
+
+    <label>Días antes de aviso</label>
+    <select id="daysBefore">
+      <option value="1">1 día</option>
+      <option value="3">3 días</option>
+      <option value="7">7 días</option>
+    </select>
+
+    <button onclick="saveSettings()">Guardar</button>
+  </div>
+</div>
+
 <script>
 
+/* DATA */
 let eventos = JSON.parse(localStorage.getItem("eventos")||"[]");
+let settings = JSON.parse(localStorage.getItem("settings")||"{}");
+
+if(!settings.daysBefore) settings.daysBefore=1;
 
 let date = new Date();
+let selectedDate=null;
+let view="home";
 
+/* RENDER */
 function render(){
+
+  if(view==="tasks"){
+    renderTasks();
+    return;
+  }
 
   const cal = document.getElementById("calendar");
   cal.innerHTML="";
 
-  const year = date.getFullYear();
-  const month = date.getMonth();
+  const y=date.getFullYear();
+  const m=date.getMonth();
 
-  document.getElementById("monthTitle").innerText =
+  document.getElementById("title").innerText =
     date.toLocaleString('es',{month:'long',year:'numeric'});
 
-  const first = new Date(year,month,1).getDay();
-  const days = new Date(year,month+1,0).getDate();
+  const first=new Date(y,m,1).getDay();
+  const days=new Date(y,m+1,0).getDate();
 
-  for(let i=0;i<first;i++){
-    cal.innerHTML += `<div></div>`;
-  }
+  for(let i=0;i<first;i++) cal.innerHTML+="<div></div>";
 
   for(let d=1;d<=days;d++){
 
-    let f = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    let f=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
 
-    let ev = eventos.filter(e=>e.fecha===f);
+    let ev=eventos.filter(e=>e.fecha===f);
 
-    let html = `<strong>${d}</strong>`;
+    let html=`<strong>${d}</strong>`;
 
     ev.forEach(e=>{
-      html += `<span class="badge">${e.nombre}</span>`;
+      let cls=getColor(e.fecha);
+      html+=`<span class="badge ${cls}">${e.nombre}</span>`;
     });
 
-    cal.innerHTML += `
+    cal.innerHTML+=`
       <div class="day" onclick="create('${f}')">
         ${html}
       </div>`;
   }
 }
 
-function create(fecha){
-  window.selectedDate = fecha;
+/* COLOR LOGIC */
+function getColor(fecha){
+  let diff=(new Date(fecha)-new Date())/86400000;
+
+  if(diff<=2) return "red";
+  if(diff<=5) return "yellow";
+  return "green";
+}
+
+/* CREATE */
+function create(f){
+  selectedDate=f;
   document.getElementById("modal").classList.add("active");
 }
 
+/* SAVE TASK */
 function saveTask(){
-  let name = document.getElementById("taskName").value;
+  let name=document.getElementById("taskName").value;
 
-  eventos.push({
-    nombre:name,
-    fecha:window.selectedDate
-  });
+  eventos.push({nombre:name,fecha:selectedDate});
 
   localStorage.setItem("eventos",JSON.stringify(eventos));
 
@@ -262,34 +307,86 @@ function saveTask(){
   render();
 }
 
-/* MONTH NAV */
-function nextMonth(){
-  date.setMonth(date.getMonth()+1);
+/* TASK LIST */
+function renderTasks(){
+  const list=document.getElementById("taskList");
+  list.innerHTML="";
+
+  eventos.forEach((e,i)=>{
+    list.innerHTML+=`
+      <div class="task">
+        <div>
+          <b>${e.nombre}</b>
+          <div class="small">${e.fecha}</div>
+        </div>
+        <button onclick="del(${i})">✕</button>
+      </div>`;
+  });
+}
+
+/* DELETE */
+function del(i){
+  eventos.splice(i,1);
+  localStorage.setItem("eventos",JSON.stringify(eventos));
   render();
 }
 
-function prevMonth(){
-  date.setMonth(date.getMonth()-1);
-  render();
-}
+/* MONTH */
+function nextMonth(){date.setMonth(date.getMonth()+1);render();}
+function prevMonth(){date.setMonth(date.getMonth()-1);render();}
 
 /* SIDEBAR */
 function toggleSidebar(){
   document.getElementById("sidebar").classList.toggle("open");
 }
 
-function closeSidebar(){
-  document.getElementById("sidebar").classList.remove("open");
-}
-
-/* PLACEHOLDERS */
-function openAlarms(){
-  alert("Sistema de alarmas (siguiente paso)");
-}
-
+/* SETTINGS */
 function openSettings(){
-  alert("Ajustes (siguiente paso)");
+  document.getElementById("settings").classList.add("active");
 }
+
+function saveSettings(){
+  settings.daysBefore=document.getElementById("daysBefore").value;
+  localStorage.setItem("settings",JSON.stringify(settings));
+  document.getElementById("settings").classList.remove("active");
+}
+
+/* ALARMS */
+function openAlarms(){
+  alert("Base de alarmas lista (siguiente upgrade: push real)");
+}
+
+/* NOTIFICATIONS */
+if("Notification" in window && Notification.permission!=="denied"){
+  Notification.requestPermission();
+}
+
+/* CHECK ALERTS */
+setInterval(()=>{
+
+  eventos.forEach(e=>{
+    let diff=(new Date(e.fecha)-new Date())/86400000;
+
+    if(diff<=settings.daysBefore && diff>0){
+
+      if(Notification.permission==="granted"){
+        new Notification("📚 Recordatorio",{
+          body:e.nombre+" es pronto"
+        });
+      }
+    }
+
+    if(Math.floor(diff)===0){
+      if(Notification.permission==="granted"){
+        new Notification("🔥 HOY",{
+          body:e.nombre
+        });
+      }
+    }
+
+  });
+
+},60000);
 
 render();
 
