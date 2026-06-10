@@ -7,14 +7,11 @@
 
 <style>
 :root{
-  --bg:#0b1220;
+  --bg:#ffffff;
   --card:#111827;
-  --text:#e5e7eb;
-  --muted:#94a3b8;
-  --primary:#3b82f6;
-  --danger:#ef4444;
-  --warn:#f59e0b;
-  --ok:#22c55e;
+  --text:#0f172a;
+  --muted:#64748b;
+  --primary:#2563eb;
 }
 
 *{box-sizing:border-box;font-family:system-ui;}
@@ -23,15 +20,16 @@ body{
   margin:0;
   background:var(--bg);
   color:var(--text);
+  transition:.3s;
 }
 
-/* TOP */
+/* TOP BAR */
 .topbar{
   display:flex;
   justify-content:space-between;
   align-items:center;
   padding:12px;
-  background:#0a0f1c;
+  background:#f1f5f9;
   position:sticky;
   top:0;
 }
@@ -39,27 +37,25 @@ body{
 .topbar button{
   background:none;
   border:none;
-  color:white;
   font-size:20px;
   cursor:pointer;
 }
 
-/* LAYOUT */
+/* CONTAINER */
 .container{
   max-width:900px;
   margin:auto;
   padding:10px;
 }
 
-/* MONTH NAV */
-.monthbar{
+/* CALENDAR */
+.header{
   display:flex;
   justify-content:space-between;
   align-items:center;
   margin:10px 0;
 }
 
-/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(7,1fr);
@@ -68,7 +64,8 @@ body{
 
 .day{
   background:#111827;
-  min-height:80px;
+  color:white;
+  min-height:85px;
   border-radius:10px;
   padding:6px;
   cursor:pointer;
@@ -88,19 +85,15 @@ body{
   background:#1f2937;
 }
 
-/* PRIORITY COLORS */
-.red{background:#7f1d1d;}
-.yellow{background:#78350f;}
-.green{background:#14532d;}
-
 /* SIDEBAR */
 .sidebar{
   position:fixed;
-  left:-260px;
   top:0;
+  left:-260px;
   width:260px;
   height:100%;
-  background:#0a0f1c;
+  background:#0f172a;
+  color:white;
   padding:15px;
   transition:.3s;
 }
@@ -113,15 +106,13 @@ body{
   padding:10px;
   border:none;
   border-radius:8px;
-  background:#111827;
-  color:white;
 }
 
 /* MODAL */
 .modal{
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,.6);
+  background:rgba(0,0,0,.5);
   display:none;
   justify-content:center;
   align-items:center;
@@ -130,40 +121,27 @@ body{
 .modal.active{display:flex;}
 
 .box{
-  background:#111827;
+  background:white;
   padding:15px;
   border-radius:10px;
   width:300px;
 }
 
-input, select{
+input,select{
   width:100%;
   padding:10px;
   margin-top:8px;
-  border-radius:8px;
-  border:none;
 }
 
-/* LIST */
-.list{
-  margin-top:10px;
-}
-
+/* TASK LIST */
 .task{
-  background:#111827;
+  background:#f1f5f9;
   padding:10px;
   border-radius:10px;
-  margin-bottom:8px;
+  margin-top:8px;
   display:flex;
   justify-content:space-between;
-  align-items:center;
 }
-
-.small{
-  font-size:12px;
-  color:var(--muted);
-}
-
 </style>
 </head>
 
@@ -181,22 +159,29 @@ input, select{
 <!-- SIDEBAR -->
 <div class="sidebar" id="sidebar">
   <h3>Menú</h3>
-  <button onclick="toggleSidebar()">Cerrar</button>
-  <button onclick="view='home';render()">Inicio</button>
-  <button onclick="view='tasks';render()">Tareas</button>
+
+  <button onclick="toggleMute()">🔇 ON/OFF sonido</button>
+
+  <h4>🌗 Fondo</h4>
+  <input type="range" min="0.7" max="1.2" step="0.1" onchange="setTheme(this.value)">
+
+  <h4>📅 Brillo calendario</h4>
+  <input type="range" min="0.5" max="1" step="0.1" onchange="setCal(this.value)">
+
 </div>
 
+<!-- MAIN -->
 <div class="container">
 
-  <div class="monthbar">
+  <div class="header">
     <button onclick="prevMonth()">◀</button>
     <h2 id="title"></h2>
     <button onclick="nextMonth()">▶</button>
   </div>
 
-  <div id="calendar" class="grid"></div>
+  <div class="grid" id="calendar"></div>
 
-  <div id="taskList" class="list"></div>
+  <div id="tasks"></div>
 
 </div>
 
@@ -204,24 +189,8 @@ input, select{
 <div class="modal" id="modal">
   <div class="box">
     <h3>Nueva tarea</h3>
-    <input id="taskName" placeholder="Nombre">
+    <input id="name" placeholder="Nombre">
     <button onclick="saveTask()">Guardar</button>
-  </div>
-</div>
-
-<!-- SETTINGS -->
-<div class="modal" id="settings">
-  <div class="box">
-    <h3>Ajustes</h3>
-
-    <label>Días antes de aviso</label>
-    <select id="daysBefore">
-      <option value="1">1 día</option>
-      <option value="3">3 días</option>
-      <option value="7">7 días</option>
-    </select>
-
-    <button onclick="saveSettings()">Guardar</button>
   </div>
 </div>
 
@@ -229,30 +198,23 @@ input, select{
 
 /* DATA */
 let eventos = JSON.parse(localStorage.getItem("eventos")||"[]");
-let settings = JSON.parse(localStorage.getItem("settings")||"{}");
+let alarmas = JSON.parse(localStorage.getItem("alarmas")||"[]");
 
-if(!settings.daysBefore) settings.daysBefore=1;
-
-let date = new Date();
-let selectedDate=null;
-let view="home";
+let date=new Date();
+let selected=null;
+let muted=false;
 
 /* RENDER */
 function render(){
 
-  if(view==="tasks"){
-    renderTasks();
-    return;
-  }
-
-  const cal = document.getElementById("calendar");
+  const cal=document.getElementById("calendar");
   cal.innerHTML="";
 
   const y=date.getFullYear();
   const m=date.getMonth();
 
   document.getElementById("title").innerText =
-    date.toLocaleString('es',{month:'long',year:'numeric'});
+  date.toLocaleString("es",{month:"long",year:"numeric"});
 
   const first=new Date(y,m,1).getDay();
   const days=new Date(y,m+1,0).getDate();
@@ -268,8 +230,7 @@ function render(){
     let html=`<strong>${d}</strong>`;
 
     ev.forEach(e=>{
-      let cls=getColor(e.fecha);
-      html+=`<span class="badge ${cls}">${e.nombre}</span>`;
+      html+=`<span class="badge">${e.nombre}</span>`;
     });
 
     cal.innerHTML+=`
@@ -279,55 +240,21 @@ function render(){
   }
 }
 
-/* COLOR LOGIC */
-function getColor(fecha){
-  let diff=(new Date(fecha)-new Date())/86400000;
-
-  if(diff<=2) return "red";
-  if(diff<=5) return "yellow";
-  return "green";
-}
-
 /* CREATE */
 function create(f){
-  selectedDate=f;
+  selected=f;
   document.getElementById("modal").classList.add("active");
 }
 
-/* SAVE TASK */
+/* SAVE */
 function saveTask(){
-  let name=document.getElementById("taskName").value;
+  let name=document.getElementById("name").value;
 
-  eventos.push({nombre:name,fecha:selectedDate});
-
+  eventos.push({nombre:name,fecha:selected});
   localStorage.setItem("eventos",JSON.stringify(eventos));
 
   document.getElementById("modal").classList.remove("active");
 
-  render();
-}
-
-/* TASK LIST */
-function renderTasks(){
-  const list=document.getElementById("taskList");
-  list.innerHTML="";
-
-  eventos.forEach((e,i)=>{
-    list.innerHTML+=`
-      <div class="task">
-        <div>
-          <b>${e.nombre}</b>
-          <div class="small">${e.fecha}</div>
-        </div>
-        <button onclick="del(${i})">✕</button>
-      </div>`;
-  });
-}
-
-/* DELETE */
-function del(i){
-  eventos.splice(i,1);
-  localStorage.setItem("eventos",JSON.stringify(eventos));
   render();
 }
 
@@ -340,53 +267,69 @@ function toggleSidebar(){
   document.getElementById("sidebar").classList.toggle("open");
 }
 
-/* SETTINGS */
-function openSettings(){
-  document.getElementById("settings").classList.add("active");
+/* THEME */
+function setTheme(v){
+  document.body.style.filter=`brightness(${v})`;
 }
 
-function saveSettings(){
-  settings.daysBefore=document.getElementById("daysBefore").value;
-  localStorage.setItem("settings",JSON.stringify(settings));
-  document.getElementById("settings").classList.remove("active");
+function setCal(v){
+  document.querySelectorAll(".day")
+  .forEach(d=>d.style.opacity=v);
 }
 
-/* ALARMS */
-function openAlarms(){
-  alert("Base de alarmas lista (siguiente upgrade: push real)");
+/* SOUND */
+function toggleMute(){
+  muted=!muted;
 }
 
-/* NOTIFICATIONS */
-if("Notification" in window && Notification.permission!=="denied"){
-  Notification.requestPermission();
+/* NOTIFY */
+function notify(txt){
+  if(!muted && "Notification" in window &&
+     Notification.permission==="granted"){
+    new Notification("📚 Calendario",{body:txt});
+  }
 }
 
-/* CHECK ALERTS */
+/* AUTO CHECK */
 setInterval(()=>{
 
-  eventos.forEach(e=>{
-    let diff=(new Date(e.fecha)-new Date())/86400000;
+  const now=new Date();
+  const h=now.getHours();
+  const m=String(now.getMinutes()).padStart(2,'0');
+  const time=`${h}:${m}`;
 
-    if(diff<=settings.daysBefore && diff>0){
-
-      if(Notification.permission==="granted"){
-        new Notification("📚 Recordatorio",{
-          body:e.nombre+" es pronto"
-        });
-      }
-    }
-
-    if(Math.floor(diff)===0){
-      if(Notification.permission==="granted"){
-        new Notification("🔥 HOY",{
-          body:e.nombre
-        });
-      }
-    }
-
+  alarmas.forEach(a=>{
+    if(a.hora===time) notify(a.nombre);
   });
 
+  if(h===9 && m==="00") notify("📚 9 AM tareas");
+  if(h===21 && m==="00") notify("🌙 9 PM repaso");
+
 },60000);
+
+/* ALARMAS */
+function openAlarms(){
+
+  const h=prompt("Hora HH:MM");
+  const n=prompt("Nombre alarma");
+
+  if(!h||!n) return;
+
+  alarmas.push({hora:h,nombre:n});
+
+  localStorage.setItem("alarmas",JSON.stringify(alarmas));
+
+}
+
+/* SETTINGS */
+function openSettings(){
+  alert("Usa el menú lateral para ajustes");
+}
+
+/* INIT */
+if("Notification" in window){
+  Notification.requestPermission();
+}
 
 render();
 
