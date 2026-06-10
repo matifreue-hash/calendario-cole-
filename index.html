@@ -8,10 +8,7 @@
 <style>
 :root{
   --bg:#ffffff;
-  --card:#111827;
   --text:#0f172a;
-  --muted:#64748b;
-  --primary:#2563eb;
 }
 
 *{box-sizing:border-box;font-family:system-ui;}
@@ -19,7 +16,6 @@
 body{
   margin:0;
   background:var(--bg);
-  color:var(--text);
   transition:.3s;
 }
 
@@ -27,18 +23,8 @@ body{
 .topbar{
   display:flex;
   justify-content:space-between;
-  align-items:center;
   padding:12px;
   background:#f1f5f9;
-  position:sticky;
-  top:0;
-}
-
-.topbar button{
-  background:none;
-  border:none;
-  font-size:20px;
-  cursor:pointer;
 }
 
 /* CONTAINER */
@@ -53,43 +39,52 @@ body{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin:10px 0;
 }
 
 .grid{
   display:grid;
   grid-template-columns:repeat(7,1fr);
   gap:6px;
+  margin-top:10px;
 }
 
 .day{
   background:#111827;
   color:white;
-  min-height:85px;
+  min-height:80px;
   border-radius:10px;
   padding:6px;
   cursor:pointer;
-  transition:.2s;
-}
-
-.day:hover{
-  outline:2px solid var(--primary);
 }
 
 .badge{
   display:block;
   font-size:10px;
   margin-top:3px;
+  background:#1f2937;
   padding:2px 4px;
   border-radius:6px;
-  background:#1f2937;
+}
+
+/* TASK LIST */
+#taskList{
+  margin-top:15px;
+}
+
+.task{
+  background:#f1f5f9;
+  padding:10px;
+  border-radius:10px;
+  margin-top:8px;
+  display:flex;
+  justify-content:space-between;
 }
 
 /* SIDEBAR */
 .sidebar{
   position:fixed;
-  top:0;
   left:-260px;
+  top:0;
   width:260px;
   height:100%;
   background:#0f172a;
@@ -99,14 +94,6 @@ body{
 }
 
 .sidebar.open{left:0;}
-
-.sidebar button{
-  width:100%;
-  margin-top:10px;
-  padding:10px;
-  border:none;
-  border-radius:8px;
-}
 
 /* MODAL */
 .modal{
@@ -133,15 +120,64 @@ input,select{
   margin-top:8px;
 }
 
-/* TASK LIST */
-.task{
-  background:#f1f5f9;
-  padding:10px;
-  border-radius:10px;
-  margin-top:8px;
-  display:flex;
-  justify-content:space-between;
+/* SAVE BUTTON PRO */
+.save-btn{
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  border: none;
+  padding: 12px 22px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  min-width: 140px;
+  box-shadow: 0 6px 15px rgba(37,99,235,0.35);
+  transition: all 0.2s ease;
 }
+
+/* SWITCH MODERNO */
+.switch{
+  position:relative;
+  display:inline-block;
+  width:50px;
+  height:28px;
+}
+
+.switch input{
+  opacity:0;
+  width:0;
+  height:0;
+}
+
+.slider{
+  position:absolute;
+  cursor:pointer;
+  top:0; left:0; right:0; bottom:0;
+  background:#94a3b8;
+  transition:.3s;
+  border-radius:34px;
+}
+
+.slider:before{
+  position:absolute;
+  content:"";
+  height:20px;
+  width:20px;
+  left:4px;
+  bottom:4px;
+  background:white;
+  transition:.3s;
+  border-radius:50%;
+}
+
+.switch input:checked + .slider{
+  background:#22c55e;
+}
+
+.switch input:checked + .slider:before{
+  transform:translateX(22px);
+}
+
 </style>
 </head>
 
@@ -149,39 +185,45 @@ input,select{
 
 <!-- TOP -->
 <div class="topbar">
-  <button onclick="toggleSidebar()">☰</button>
-  <div>
-    <button onclick="openAlarms()">⏰</button>
-    <button onclick="openSettings()">⚙️</button>
-  </div>
+  <button onclick="toggleMenu()">☰</button>
+  <button onclick="openSettings()">⚙️</button>
 </div>
 
 <!-- SIDEBAR -->
-<div class="sidebar" id="sidebar">
-  <h3>Menú</h3>
+<div class="sidebar" id="menu">
 
-  <button onclick="toggleMute()">🔇 ON/OFF sonido</button>
+  <button onclick="closeMenu()">✕ cerrar</button>
 
-  <h4>🌗 Fondo</h4>
-  <input type="range" min="0.7" max="1.2" step="0.1" onchange="setTheme(this.value)">
+  <h3>🔊 Alarmas</h3>
 
-  <h4>📅 Brillo calendario</h4>
+  <label class="switch">
+    <input type="checkbox" id="muteToggle" onchange="toggleMute()">
+    <span class="slider"></span>
+  </label>
+
+  <div style="font-size:12px;opacity:.7;margin-top:5px;">
+    ON = activadas / OFF = silenciadas
+  </div>
+
+  <h3 style="margin-top:15px;">🌗 Fondo calendario</h3>
+  <input type="range" min="0.5" max="1.2" step="0.1" onchange="setBg(this.value)">
+
+  <h3>📅 Brillo calendario</h3>
   <input type="range" min="0.5" max="1" step="0.1" onchange="setCal(this.value)">
-
 </div>
 
 <!-- MAIN -->
 <div class="container">
 
   <div class="header">
-    <button onclick="prevMonth()">◀</button>
+    <button onclick="prev()">◀</button>
     <h2 id="title"></h2>
-    <button onclick="nextMonth()">▶</button>
+    <button onclick="next()">▶</button>
   </div>
 
-  <div class="grid" id="calendar"></div>
+  <div class="grid" id="cal"></div>
 
-  <div id="tasks"></div>
+  <div id="taskList"></div>
 
 </div>
 
@@ -189,31 +231,55 @@ input,select{
 <div class="modal" id="modal">
   <div class="box">
     <h3>Nueva tarea</h3>
-    <input id="name" placeholder="Nombre">
-    <button onclick="saveTask()">Guardar</button>
+    <input id="name">
+    <button onclick="save()">Guardar</button>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="modal" id="settings">
+  <div class="box">
+    <h3>Ajustes</h3>
+
+    <label>Días antes de aviso</label>
+    <select id="days">
+      <option value="1">1 día</option>
+      <option value="3">3 días</option>
+      <option value="7">7 días</option>
+    </select>
+
+    <div style="display:flex;justify-content:center;margin-top:15px;">
+      <button class="save-btn" onclick="saveSettings()">Guardar</button>
+    </div>
+
   </div>
 </div>
 
 <script>
 
 /* DATA */
-let eventos = JSON.parse(localStorage.getItem("eventos")||"[]");
-let alarmas = JSON.parse(localStorage.getItem("alarmas")||"[]");
+let eventos = JSON.parse(localStorage.getItem("e")||"[]");
+let settings = JSON.parse(localStorage.getItem("s")||"{days:1}");
+let muted = JSON.parse(localStorage.getItem("muted")||"false");
 
-let date=new Date();
-let selected=null;
-let muted=false;
+let date = new Date();
+let selected = null;
+
+/* INIT SWITCH */
+window.addEventListener("load", ()=>{
+  document.getElementById("muteToggle").checked = !muted;
+});
 
 /* RENDER */
 function render(){
 
-  const cal=document.getElementById("calendar");
+  const cal=document.getElementById("cal");
   cal.innerHTML="";
 
   const y=date.getFullYear();
   const m=date.getMonth();
 
-  document.getElementById("title").innerText =
+  document.getElementById("title").innerText=
   date.toLocaleString("es",{month:"long",year:"numeric"});
 
   const first=new Date(y,m,1).getDay();
@@ -234,101 +300,98 @@ function render(){
     });
 
     cal.innerHTML+=`
-      <div class="day" onclick="create('${f}')">
+      <div class="day" onclick="openTask('${f}')">
         ${html}
       </div>`;
   }
+
+  renderList();
 }
 
-/* CREATE */
-function create(f){
+/* LIST */
+function renderList(){
+
+  const list=document.getElementById("taskList");
+  list.innerHTML="";
+
+  eventos.forEach((e,i)=>{
+    list.innerHTML+=`
+      <div class="task">
+        <div>
+          <b>${e.nombre}</b>
+          <div>${e.fecha}</div>
+        </div>
+        <button onclick="del(${i})">✕</button>
+      </div>`;
+  });
+
+}
+
+/* TASK */
+function openTask(f){
   selected=f;
   document.getElementById("modal").classList.add("active");
 }
 
-/* SAVE */
-function saveTask(){
-  let name=document.getElementById("name").value;
+function save(){
+  let n=document.getElementById("name").value;
 
-  eventos.push({nombre:name,fecha:selected});
-  localStorage.setItem("eventos",JSON.stringify(eventos));
+  eventos.push({nombre:n,fecha:selected});
+  localStorage.setItem("e",JSON.stringify(eventos));
 
   document.getElementById("modal").classList.remove("active");
 
   render();
 }
 
+/* DELETE */
+function del(i){
+  eventos.splice(i,1);
+  localStorage.setItem("e",JSON.stringify(eventos));
+  render();
+}
+
 /* MONTH */
-function nextMonth(){date.setMonth(date.getMonth()+1);render();}
-function prevMonth(){date.setMonth(date.getMonth()-1);render();}
+function next(){date.setMonth(date.getMonth()+1);render();}
+function prev(){date.setMonth(date.getMonth()-1);render();}
 
-/* SIDEBAR */
-function toggleSidebar(){
-  document.getElementById("sidebar").classList.toggle("open");
+/* MENU */
+function toggleMenu(){
+  document.getElementById("menu").classList.toggle("open");
 }
 
-/* THEME */
-function setTheme(v){
-  document.body.style.filter=`brightness(${v})`;
-}
-
-function setCal(v){
-  document.querySelectorAll(".day")
-  .forEach(d=>d.style.opacity=v);
-}
-
-/* SOUND */
-function toggleMute(){
-  muted=!muted;
-}
-
-/* NOTIFY */
-function notify(txt){
-  if(!muted && "Notification" in window &&
-     Notification.permission==="granted"){
-    new Notification("📚 Calendario",{body:txt});
-  }
-}
-
-/* AUTO CHECK */
-setInterval(()=>{
-
-  const now=new Date();
-  const h=now.getHours();
-  const m=String(now.getMinutes()).padStart(2,'0');
-  const time=`${h}:${m}`;
-
-  alarmas.forEach(a=>{
-    if(a.hora===time) notify(a.nombre);
-  });
-
-  if(h===9 && m==="00") notify("📚 9 AM tareas");
-  if(h===21 && m==="00") notify("🌙 9 PM repaso");
-
-},60000);
-
-/* ALARMAS */
-function openAlarms(){
-
-  const h=prompt("Hora HH:MM");
-  const n=prompt("Nombre alarma");
-
-  if(!h||!n) return;
-
-  alarmas.push({hora:h,nombre:n});
-
-  localStorage.setItem("alarmas",JSON.stringify(alarmas));
-
+function closeMenu(){
+  document.getElementById("menu").classList.remove("open");
 }
 
 /* SETTINGS */
 function openSettings(){
-  alert("Usa el menú lateral para ajustes");
+  document.getElementById("settings").classList.add("active");
 }
 
-/* INIT */
-if("Notification" in window){
-  Notification.requestPermission();
+function saveSettings(){
+  settings.days=document.getElementById("days").value;
+  localStorage.setItem("s",JSON.stringify(settings));
+  document.getElementById("settings").classList.remove("active");
+}
+
+/* SWITCH LOGIC */
+function toggleMute(){
+  muted = !document.getElementById("muteToggle").checked;
+  localStorage.setItem("muted",JSON.stringify(muted));
+}
+
+/* SLIDERS */
+function setBg(v){
+  document.querySelectorAll(".day").forEach(d=>{
+    d.style.background=`rgba(17,24,39,${v})`;
+  });
+}
+
+function setCal(v){
+  document.querySelectorAll(".day").forEach(d=>{
+    d.style.opacity=v;
+  });
 }
 
 render();
