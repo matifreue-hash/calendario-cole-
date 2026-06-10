@@ -1,20 +1,20 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calendario Pro</title>
+<title>Calendario Escolar Pro</title>
 
 <style>
 :root{
-  --bg:#f5f7fb;
-  --card:#ffffff;
-  --text:#0f172a;
-  --primary:#2563eb;
-  --red:#ef4444;
-  --yellow:#f59e0b;
-  --green:#22c55e;
+  --bg:#0f172a;
+  --card:#111827;
+  --muted:#94a3b8;
+  --primary:#3b82f6;
+  --danger:#ef4444;
+  --warn:#f59e0b;
+  --ok:#22c55e;
+  --text:#e5e7eb;
 }
 
 *{box-sizing:border-box;font-family:system-ui;}
@@ -25,27 +25,23 @@ body{
   color:var(--text);
 }
 
-/* TOP */
+/* TOP BAR */
 .topbar{
   display:flex;
   justify-content:space-between;
+  align-items:center;
   padding:12px;
-  background:white;
-  box-shadow:0 2px 10px rgba(0,0,0,.05);
+  background:#0b1220;
+  position:sticky;
+  top:0;
 }
 
-/* BUTTONS */
-.btn{
+.topbar button{
+  background:none;
   border:none;
-  padding:10px 14px;
-  border-radius:12px;
-  cursor:pointer;
-  font-weight:600;
-}
-
-.btn-primary{
-  background:var(--primary);
   color:white;
+  font-size:20px;
+  cursor:pointer;
 }
 
 /* LAYOUT */
@@ -55,64 +51,98 @@ body{
   padding:12px;
 }
 
-/* CALENDAR */
+/* CALENDAR HEADER */
+.cal-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin:10px 0;
+}
+
+.cal-header h2{
+  margin:0;
+}
+
+/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(7,1fr);
   gap:6px;
-  margin-top:10px;
 }
 
 .day{
   background:#111827;
-  color:white;
-  min-height:70px;
+  min-height:80px;
   border-radius:10px;
   padding:6px;
   cursor:pointer;
-  position:relative;
+}
+
+.day:hover{
+  outline:2px solid var(--primary);
 }
 
 .badge{
   font-size:10px;
   display:block;
   margin-top:3px;
-  background:rgba(255,255,255,.1);
   padding:2px 4px;
   border-radius:6px;
 }
 
-/* COLORS */
-.rojo{border:2px solid var(--red);}
-.amarillo{border:2px solid var(--yellow);}
-.verde{border:2px solid var(--green);}
+.red{background:#7f1d1d;}
+.yellow{background:#78350f;}
+.green{background:#14532d;}
 
-/* LIST */
-.task{
-  background:white;
+/* SIDEBAR */
+.sidebar{
+  position:fixed;
+  top:0;
+  left:-260px;
+  width:260px;
+  height:100%;
+  background:#0b1220;
+  padding:15px;
+  transition:0.3s;
+}
+
+.sidebar.open{
+  left:0;
+}
+
+.sidebar h3{
+  margin-top:0;
+}
+
+.sidebar button{
+  width:100%;
+  margin-top:10px;
   padding:10px;
-  margin-top:8px;
-  border-radius:10px;
-  display:flex;
-  justify-content:space-between;
+  background:#111827;
+  color:white;
+  border:none;
+  border-radius:8px;
 }
 
 /* MODAL */
 .modal{
   position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.5);
+  top:0;left:0;
+  width:100%;height:100%;
+  background:rgba(0,0,0,0.6);
   display:none;
   justify-content:center;
   align-items:center;
 }
 
-.modal.active{display:flex;}
+.modal.active{
+  display:flex;
+}
 
-.box{
-  background:white;
+.modal-box{
+  background:#111827;
   padding:15px;
-  border-radius:12px;
+  border-radius:10px;
   width:300px;
 }
 
@@ -120,75 +150,84 @@ input{
   width:100%;
   padding:10px;
   margin-top:8px;
-  border-radius:10px;
-  border:1px solid #ddd;
+  border-radius:8px;
+  border:none;
 }
-
 </style>
 </head>
 
 <body>
 
+<!-- TOP BAR -->
 <div class="topbar">
-  <button class="btn" onclick="prev()">◀</button>
+  <button onclick="toggleSidebar()">☰</button>
+  <div>
+    <button onclick="openAlarms()">⏰</button>
+    <button onclick="openSettings()">⚙️</button>
+  </div>
+</div>
 
-  <button class="btn btn-primary" onclick="openSettings()">⚙ Ajustes</button>
-
-  <button class="btn" onclick="next()">▶</button>
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <h3>Menú</h3>
+  <button onclick="closeSidebar()">Cerrar</button>
+  <button>Inicio</button>
+  <button>Alarmas</button>
+  <button>Ajustes</button>
 </div>
 
 <div class="container">
 
-  <h2 id="title"></h2>
+  <!-- CALENDAR HEADER -->
+  <div class="cal-header">
+    <button onclick="prevMonth()">◀</button>
+    <h2 id="monthTitle"></h2>
+    <button onclick="nextMonth()">▶</button>
+  </div>
 
-  <div class="grid" id="cal"></div>
-
-  <h3>📋 Tareas</h3>
-  <div id="list"></div>
+  <!-- CALENDAR -->
+  <div class="grid" id="calendar"></div>
 
 </div>
 
 <!-- MODAL -->
 <div class="modal" id="modal">
-  <div class="box">
+  <div class="modal-box">
     <h3>Nueva tarea</h3>
-    <input id="name" placeholder="Nombre">
-    <input id="time" type="time">
-    <button class="btn btn-primary" onclick="save()">Guardar</button>
+    <input id="taskName" placeholder="Nombre">
+    <button onclick="saveTask()">Guardar</button>
   </div>
 </div>
 
 <script>
 
-let eventos = JSON.parse(localStorage.getItem("e")||"[]");
+let eventos = JSON.parse(localStorage.getItem("eventos")||"[]");
+
 let date = new Date();
-let selected = null;
 
-/* SAFE RENDER */
 function render(){
-try{
 
-  const cal = document.getElementById("cal");
+  const cal = document.getElementById("calendar");
   cal.innerHTML="";
 
-  let y = date.getFullYear();
-  let m = date.getMonth();
+  const year = date.getFullYear();
+  const month = date.getMonth();
 
-  document.getElementById("title").innerText =
-  date.toLocaleString("es",{month:"long",year:"numeric"});
+  document.getElementById("monthTitle").innerText =
+    date.toLocaleString('es',{month:'long',year:'numeric'});
 
-  let first = new Date(y,m,1).getDay();
-  let days = new Date(y,m+1,0).getDate();
+  const first = new Date(year,month,1).getDay();
+  const days = new Date(year,month+1,0).getDate();
 
-  for(let i=0;i<first;i++) cal.innerHTML+="<div></div>";
+  for(let i=0;i<first;i++){
+    cal.innerHTML += `<div></div>`;
+  }
 
-  for(let d=1; d<=days; d++){
+  for(let d=1;d<=days;d++){
 
-    let f = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    let f = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
 
     let ev = eventos.filter(e=>e.fecha===f);
-
-    let clase = getColor(f);
 
     let html = `<strong>${d}</strong>`;
 
@@ -197,82 +236,62 @@ try{
     });
 
     cal.innerHTML += `
-      <div class="day ${clase}" onclick="openTask('${f}')">
+      <div class="day" onclick="create('${f}')">
         ${html}
       </div>`;
   }
-
-  renderList();
-
-}catch(e){
-  console.log("Render error",e);
-}
 }
 
-/* COLOR SYSTEM */
-function getColor(fecha){
-  let ev = eventos.filter(e=>e.fecha===fecha);
-  if(ev.length===0) return "";
-  return "rojo"; // simplificado (puedes extenderlo)
-}
-
-/* LIST */
-function renderList(){
-  let list = document.getElementById("list");
-  list.innerHTML="";
-
-  eventos.forEach((e,i)=>{
-    list.innerHTML += `
-      <div class="task">
-        <div>
-          <b>${e.nombre}</b><br>
-          <small>${e.fecha} ${e.hora||""}</small>
-        </div>
-        <button onclick="del(${i})">✕</button>
-      </div>`;
-  });
-}
-
-/* OPEN */
-function openTask(f){
-  selected=f;
+function create(fecha){
+  window.selectedDate = fecha;
   document.getElementById("modal").classList.add("active");
 }
 
-/* SAVE */
-function save(){
-
-  let n=document.getElementById("name").value;
-  let t=document.getElementById("time").value;
-
-  if(!n||!selected) return;
+function saveTask(){
+  let name = document.getElementById("taskName").value;
 
   eventos.push({
-    nombre:n,
-    fecha:selected,
-    hora:t
+    nombre:name,
+    fecha:window.selectedDate
   });
 
-  localStorage.setItem("e",JSON.stringify(eventos));
+  localStorage.setItem("eventos",JSON.stringify(eventos));
 
   document.getElementById("modal").classList.remove("active");
 
   render();
 }
 
-/* DELETE */
-function del(i){
-  eventos.splice(i,1);
-  localStorage.setItem("e",JSON.stringify(eventos));
+/* MONTH NAV */
+function nextMonth(){
+  date.setMonth(date.getMonth()+1);
   render();
 }
 
-/* MONTH */
-function next(){date.setMonth(date.getMonth()+1);render();}
-function prev(){date.setMonth(date.getMonth()-1);render();}
+function prevMonth(){
+  date.setMonth(date.getMonth()-1);
+  render();
+}
 
-/* START SAFE */
-window.addEventListener("DOMContentLoaded", render);
+/* SIDEBAR */
+function toggleSidebar(){
+  document.getElementById("sidebar").classList.toggle("open");
+}
+
+function closeSidebar(){
+  document.getElementById("sidebar").classList.remove("open");
+}
+
+/* PLACEHOLDERS */
+function openAlarms(){
+  alert("Sistema de alarmas (siguiente paso)");
+}
+
+function openSettings(){
+  alert("Ajustes (siguiente paso)");
+}
+
+render();
 
 </script>
 
