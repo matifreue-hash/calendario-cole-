@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calendario Dark</title>
+<title>Calendario Pro Dark</title>
 
 <style>
 body{
   margin:0;
   font-family:system-ui;
-  background:#0b1220;
+  background:#0a0a0a;
   color:white;
 }
 
@@ -18,7 +18,7 @@ body{
   display:flex;
   justify-content:space-between;
   padding:12px;
-  background:#111827;
+  background:#111;
 }
 
 /* MENU */
@@ -31,7 +31,6 @@ body{
   background:#0f172a;
   padding:15px;
   transition:.3s;
-  z-index:1000;
 }
 
 .menu.open{left:0;}
@@ -42,17 +41,17 @@ body{
   padding:10px;
   border:none;
   border-radius:10px;
-  cursor:pointer;
+  background:#1f2937;
+  color:white;
 }
 
-/* MAIN */
+/* CALENDAR */
 .container{
   max-width:900px;
   margin:auto;
   padding:12px;
 }
 
-/* CALENDAR */
 .grid{
   display:grid;
   grid-template-columns:repeat(7,1fr);
@@ -61,26 +60,31 @@ body{
 }
 
 .day{
-  background:#111827;
+  background:#111;
   min-height:70px;
   border-radius:10px;
   padding:6px;
   cursor:pointer;
-  border:1px solid #1f2937;
+  border:1px solid #222;
 }
+
+/* COLORS */
+.rojo{border:2px solid #ef4444;}
+.amarillo{border:2px solid #f59e0b;}
+.verde{border:2px solid #22c55e;}
 
 .badge{
   font-size:10px;
   display:block;
   margin-top:3px;
-  background:#1f2937;
+  background:#222;
   padding:2px 4px;
   border-radius:6px;
 }
 
-/* LIST */
+/* TASK LIST */
 .task{
-  background:#111827;
+  background:#111;
   padding:10px;
   margin-top:8px;
   border-radius:10px;
@@ -101,7 +105,7 @@ body{
 .modal.active{display:flex;}
 
 .box{
-  background:#111827;
+  background:#111;
   padding:15px;
   border-radius:12px;
   width:300px;
@@ -113,8 +117,12 @@ input{
   margin-top:8px;
   border-radius:10px;
   border:none;
-  background:#0b1220;
+  background:#0a0a0a;
   color:white;
+}
+
+button{
+  cursor:pointer;
 }
 
 .btn{
@@ -125,7 +133,6 @@ input{
   border-radius:10px;
   background:#2563eb;
   color:white;
-  cursor:pointer;
 }
 
 </style>
@@ -136,16 +143,14 @@ input{
 <!-- TOP -->
 <div class="topbar">
   <button onclick="toggleMenu()">☰</button>
-  <div>📅 Calendario</div>
+  <div>📅 Calendario Pro</div>
 </div>
 
 <!-- MENU -->
 <div class="menu" id="menu">
-
-  <button onclick="alert('Inicio')">🏠 Iniciar</button>
-  <button onclick="showTasks()">📋 Tareas</button>
-  <button onclick="closeMenu()">❌ Cerrar</button>
-
+  <button onclick="home()">🏠 Iniciar</button>
+  <button onclick="scrollTasks()">📋 Tareas</button>
+  <button onclick="toggleMenu()">❌ Cerrar</button>
 </div>
 
 <!-- MAIN -->
@@ -155,7 +160,7 @@ input{
 
   <div class="grid" id="cal"></div>
 
-  <h3>📋 Tareas</h3>
+  <h3>📋 Tareas / Exámenes</h3>
   <div id="list"></div>
 
 </div>
@@ -165,6 +170,7 @@ input{
   <div class="box">
     <h3>Nueva tarea</h3>
     <input id="name" placeholder="Nombre">
+    <input id="hora" type="time">
     <button class="btn" onclick="save()">Guardar</button>
   </div>
 </div>
@@ -180,14 +186,19 @@ function toggleMenu(){
   document.getElementById("menu").classList.toggle("open");
 }
 
-function closeMenu(){
-  document.getElementById("menu").classList.remove("open");
+function home(){
+  date = new Date();
+  render();
+}
+
+function scrollTasks(){
+  document.getElementById("list").scrollIntoView({behavior:"smooth"});
 }
 
 /* CALENDAR */
 function render(){
 
-  const cal = document.getElementById("cal");
+  const cal=document.getElementById("cal");
   cal.innerHTML="";
 
   let y=date.getFullYear();
@@ -196,25 +207,27 @@ function render(){
   document.getElementById("title").innerText =
   date.toLocaleString("es",{month:"long",year:"numeric"});
 
-  let first = new Date(y,m,1).getDay();
-  let days = new Date(y,m+1,0).getDate();
+  let first=new Date(y,m,1).getDay();
+  let days=new Date(y,m+1,0).getDate();
 
   for(let i=0;i<first;i++) cal.innerHTML+="<div></div>";
 
   for(let d=1; d<=days; d++){
 
-    let f = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    let f=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
 
-    let ev = eventos.filter(e=>e.fecha===f);
+    let ev=eventos.filter(e=>e.fecha===f);
 
-    let html = `<strong>${d}</strong>`;
+    let clase=getColor(f);
+
+    let html=`<strong>${d}</strong>`;
 
     ev.forEach(e=>{
-      html += `<span class="badge">${e.nombre}</span>`;
+      html+=`<span class="badge">${e.nombre}</span>`;
     });
 
-    cal.innerHTML += `
-      <div class="day" onclick="openTask('${f}')">
+    cal.innerHTML+=`
+      <div class="day ${clase}" onclick="openTask('${f}')">
         ${html}
       </div>`;
   }
@@ -222,41 +235,64 @@ function render(){
   renderList();
 }
 
+/* COLOR LOGIC */
+function getColor(fecha){
+  let ev=eventos.filter(e=>e.fecha===fecha);
+  if(!ev.length) return "";
+
+  let hoy=new Date();
+  let f=new Date(fecha);
+  let diff=(f-hoy)/86400000;
+
+  if(diff<=5) return "rojo";
+  if(diff<=10) return "amarillo";
+  return "verde";
+}
+
 /* LIST */
 function renderList(){
 
-  let list = document.getElementById("list");
+  let list=document.getElementById("list");
   list.innerHTML="";
 
   eventos.forEach((e,i)=>{
-    list.innerHTML += `
+    list.innerHTML+=`
       <div class="task">
         <div>
           <b>${e.nombre}</b><br>
-          <small>${e.fecha}</small>
+          <small>${e.fecha} ${e.hora||""}</small>
         </div>
         <button onclick="del(${i})">✕</button>
       </div>`;
   });
 }
 
-/* TASK */
+/* CREATE */
 function openTask(f){
   selected=f;
   document.getElementById("modal").classList.add("active");
 }
 
 function save(){
+
   let n=document.getElementById("name").value;
+  let h=document.getElementById("hora").value;
+
   if(!n||!selected) return;
 
-  eventos.push({nombre:n,fecha:selected});
+  eventos.push({
+    nombre:n,
+    fecha:selected,
+    hora:h
+  });
 
   localStorage.setItem("e",JSON.stringify(eventos));
 
   document.getElementById("modal").classList.remove("active");
 
   render();
+
+  checkAlarm();
 }
 
 /* DELETE */
@@ -266,13 +302,36 @@ function del(i){
   render();
 }
 
-/* EXTRA */
-function showTasks(){
-  alert("Baja hasta la lista de tareas ↓");
+/* ALARM SYSTEM */
+function checkAlarm(){
+
+  let now=new Date();
+  let h=String(now.getHours()).padStart(2,"0");
+  let m=String(now.getMinutes()).padStart(2,"0");
+
+  let today=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+
+  eventos.forEach(e=>{
+    if(e.fecha===today && e.hora===`${h}:${m}`){
+      if(Notification.permission==="granted"){
+        new Notification("📅 Recordatorio",{
+          body:e.nombre
+        });
+      }
+    }
+  });
 }
 
+/* LOOP ALARMA */
+setInterval(checkAlarm,60000);
+
 /* INIT */
-window.addEventListener("DOMContentLoaded",render);
+window.addEventListener("DOMContentLoaded",()=>{
+  if(Notification.permission!=="granted"){
+    Notification.requestPermission();
+  }
+  render();
+});
 
 </script>
 
