@@ -11,29 +11,16 @@ body{
   font-family:system-ui;
   background:#0a0a0a;
   color:white;
-}
-
-/* TOP */
-.topbar{
   display:flex;
-  justify-content:space-between;
-  padding:12px;
-  background:#111;
 }
 
-/* MENU */
+/* MENU SIEMPRE VISIBLE */
 .menu{
-  position:fixed;
-  left:-260px;
-  top:0;
-  width:260px;
-  height:100%;
+  width:220px;
+  height:100vh;
   background:#0f172a;
-  padding:15px;
-  transition:.3s;
+  padding:12px;
 }
-
-.menu.open{left:0;}
 
 .menu button{
   width:100%;
@@ -43,15 +30,26 @@ body{
   border-radius:10px;
   background:#1f2937;
   color:white;
+  cursor:pointer;
 }
 
-/* CALENDAR */
-.container{
-  max-width:900px;
-  margin:auto;
+/* MAIN */
+.main{
+  flex:1;
   padding:12px;
 }
 
+/* TOP */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px;
+  background:#111;
+  border-radius:10px;
+}
+
+/* CALENDAR */
 .grid{
   display:grid;
   grid-template-columns:repeat(7,1fr);
@@ -64,11 +62,10 @@ body{
   min-height:70px;
   border-radius:10px;
   padding:6px;
-  cursor:pointer;
   border:1px solid #222;
+  cursor:pointer;
 }
 
-/* COLORS */
 .rojo{border:2px solid #ef4444;}
 .amarillo{border:2px solid #f59e0b;}
 .verde{border:2px solid #22c55e;}
@@ -83,6 +80,10 @@ body{
 }
 
 /* TASK LIST */
+#taskList{
+  margin-top:15px;
+}
+
 .task{
   background:#111;
   padding:10px;
@@ -111,7 +112,7 @@ body{
   width:300px;
 }
 
-input{
+input,select{
   width:100%;
   padding:10px;
   margin-top:8px;
@@ -119,10 +120,6 @@ input{
   border:none;
   background:#0a0a0a;
   color:white;
-}
-
-button{
-  cursor:pointer;
 }
 
 .btn{
@@ -133,72 +130,88 @@ button{
   border-radius:10px;
   background:#2563eb;
   color:white;
+  cursor:pointer;
 }
-
 </style>
 </head>
 
 <body>
 
-<!-- TOP -->
-<div class="topbar">
-  <button onclick="toggleMenu()">☰</button>
-  <div>📅 Calendario Pro</div>
-</div>
-
 <!-- MENU -->
-<div class="menu" id="menu">
-  <button onclick="home()">🏠 Iniciar</button>
+<div class="menu">
+  <h3>📅 Menú</h3>
+
+  <button onclick="goHome()">🏠 Inicio</button>
   <button onclick="scrollTasks()">📋 Tareas</button>
-  <button onclick="toggleMenu()">❌ Cerrar</button>
+  <button onclick="openSettings()">⚙ Ajustes</button>
 </div>
 
 <!-- MAIN -->
-<div class="container">
+<div class="main">
 
-  <h2 id="title"></h2>
+  <div class="topbar">
+    <button onclick="prevMonth()">◀</button>
+    <h3 id="title"></h3>
+    <button onclick="nextMonth()">▶</button>
+
+    <button onclick="openAlarm()">🔔 Alarma</button>
+  </div>
 
   <div class="grid" id="cal"></div>
 
-  <h3>📋 Tareas / Exámenes</h3>
-  <div id="list"></div>
+  <h3>📋 Tareas y Exámenes</h3>
+  <div id="taskList"></div>
 
 </div>
 
-<!-- MODAL -->
+<!-- TASK -->
 <div class="modal" id="modal">
   <div class="box">
     <h3>Nueva tarea</h3>
     <input id="name" placeholder="Nombre">
-    <input id="hora" type="time">
+    <input id="time" type="time">
     <button class="btn" onclick="save()">Guardar</button>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="modal" id="settings">
+  <div class="box">
+    <h3>⚙ Ajustes</h3>
+
+    <label>Notificar antes de evento</label>
+    <select id="before">
+      <option value="1">1 día</option>
+      <option value="3">3 días</option>
+      <option value="7">7 días</option>
+    </select>
+
+    <button class="btn" onclick="saveSettings()">Guardar</button>
+  </div>
+</div>
+
+<!-- ALARM -->
+<div class="modal" id="alarm">
+  <div class="box">
+    <h3>🔔 Alarma</h3>
+    <input type="time" id="alarmTime">
+    <button class="btn" onclick="setAlarm()">Activar</button>
   </div>
 </div>
 
 <script>
 
 let eventos = JSON.parse(localStorage.getItem("e")||"[]");
+let settings = JSON.parse(localStorage.getItem("s")||"{}");
+
 let date = new Date();
 let selected = null;
-
-/* MENU */
-function toggleMenu(){
-  document.getElementById("menu").classList.toggle("open");
-}
-
-function home(){
-  date = new Date();
-  render();
-}
-
-function scrollTasks(){
-  document.getElementById("list").scrollIntoView({behavior:"smooth"});
-}
+let alarmTime = null;
 
 /* CALENDAR */
 function render(){
 
-  const cal=document.getElementById("cal");
+  let cal=document.getElementById("cal");
   cal.innerHTML="";
 
   let y=date.getFullYear();
@@ -235,7 +248,7 @@ function render(){
   renderList();
 }
 
-/* COLOR LOGIC */
+/* COLOR */
 function getColor(fecha){
   let ev=eventos.filter(e=>e.fecha===fecha);
   if(!ev.length) return "";
@@ -251,8 +264,7 @@ function getColor(fecha){
 
 /* LIST */
 function renderList(){
-
-  let list=document.getElementById("list");
+  let list=document.getElementById("taskList");
   list.innerHTML="";
 
   eventos.forEach((e,i)=>{
@@ -267,32 +279,21 @@ function renderList(){
   });
 }
 
-/* CREATE */
+/* ADD */
 function openTask(f){
   selected=f;
   document.getElementById("modal").classList.add("active");
 }
 
 function save(){
-
   let n=document.getElementById("name").value;
-  let h=document.getElementById("hora").value;
+  let t=document.getElementById("time").value;
 
-  if(!n||!selected) return;
-
-  eventos.push({
-    nombre:n,
-    fecha:selected,
-    hora:h
-  });
-
+  eventos.push({nombre:n,fecha:selected,hora:t});
   localStorage.setItem("e",JSON.stringify(eventos));
 
   document.getElementById("modal").classList.remove("active");
-
   render();
-
-  checkAlarm();
 }
 
 /* DELETE */
@@ -302,28 +303,47 @@ function del(i){
   render();
 }
 
-/* ALARM SYSTEM */
-function checkAlarm(){
+/* MONTH */
+function nextMonth(){date.setMonth(date.getMonth()+1);render();}
+function prevMonth(){date.setMonth(date.getMonth()-1);render();}
+function goHome(){date=new Date();render();}
+function scrollTasks(){document.getElementById("taskList").scrollIntoView({behavior:"smooth"});}
+
+/* SETTINGS */
+function openSettings(){
+  document.getElementById("settings").classList.add("active");
+}
+
+function saveSettings(){
+  settings.before=document.getElementById("before").value;
+  localStorage.setItem("s",JSON.stringify(settings));
+  document.getElementById("settings").classList.remove("active");
+}
+
+/* ALARM */
+function openAlarm(){
+  document.getElementById("alarm").classList.add("active");
+}
+
+function setAlarm(){
+  alarmTime=document.getElementById("alarmTime").value;
+  document.getElementById("alarm").classList.remove("active");
+}
+
+/* CHECK ALARM */
+setInterval(()=>{
 
   let now=new Date();
   let h=String(now.getHours()).padStart(2,"0");
   let m=String(now.getMinutes()).padStart(2,"0");
 
-  let today=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-
-  eventos.forEach(e=>{
-    if(e.fecha===today && e.hora===`${h}:${m}`){
-      if(Notification.permission==="granted"){
-        new Notification("📅 Recordatorio",{
-          body:e.nombre
-        });
-      }
+  if(alarmTime===`${h}:${m}`){
+    if(Notification.permission==="granted"){
+      new Notification("🔔 Alarma",{body:"Tarea programada"});
     }
-  });
-}
+  }
 
-/* LOOP ALARMA */
-setInterval(checkAlarm,60000);
+},60000);
 
 /* INIT */
 window.addEventListener("DOMContentLoaded",()=>{
