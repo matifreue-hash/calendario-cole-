@@ -3,44 +3,56 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calendario Escolar Pro</title>
+<title>Calendario Dark</title>
 
 <style>
-:root{
-  --bg:#ffffff;
-  --text:#0f172a;
-}
-
-*{box-sizing:border-box;font-family:system-ui;}
-
 body{
   margin:0;
-  background:var(--bg);
-  transition:.3s;
+  font-family:system-ui;
+  background:#0b1220;
+  color:white;
 }
 
-/* TOP BAR */
+/* TOP */
 .topbar{
   display:flex;
   justify-content:space-between;
   padding:12px;
-  background:#f1f5f9;
+  background:#111827;
 }
 
-/* CONTAINER */
+/* MENU */
+.menu{
+  position:fixed;
+  left:-260px;
+  top:0;
+  width:260px;
+  height:100%;
+  background:#0f172a;
+  padding:15px;
+  transition:.3s;
+  z-index:1000;
+}
+
+.menu.open{left:0;}
+
+.menu button{
+  width:100%;
+  margin-top:10px;
+  padding:10px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+/* MAIN */
 .container{
   max-width:900px;
   margin:auto;
-  padding:10px;
+  padding:12px;
 }
 
 /* CALENDAR */
-.header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
 .grid{
   display:grid;
   grid-template-columns:repeat(7,1fr);
@@ -50,56 +62,37 @@ body{
 
 .day{
   background:#111827;
-  color:white;
-  min-height:80px;
+  min-height:70px;
   border-radius:10px;
   padding:6px;
   cursor:pointer;
+  border:1px solid #1f2937;
 }
 
 .badge{
-  display:block;
   font-size:10px;
+  display:block;
   margin-top:3px;
   background:#1f2937;
   padding:2px 4px;
   border-radius:6px;
 }
 
-/* TASK LIST */
-#taskList{
-  margin-top:15px;
-}
-
+/* LIST */
 .task{
-  background:#f1f5f9;
+  background:#111827;
   padding:10px;
-  border-radius:10px;
   margin-top:8px;
+  border-radius:10px;
   display:flex;
   justify-content:space-between;
 }
-
-/* SIDEBAR */
-.sidebar{
-  position:fixed;
-  left:-260px;
-  top:0;
-  width:260px;
-  height:100%;
-  background:#0f172a;
-  color:white;
-  padding:15px;
-  transition:.3s;
-}
-
-.sidebar.open{left:0;}
 
 /* MODAL */
 .modal{
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,.5);
+  background:rgba(0,0,0,.6);
   display:none;
   justify-content:center;
   align-items:center;
@@ -108,74 +101,31 @@ body{
 .modal.active{display:flex;}
 
 .box{
-  background:white;
+  background:#111827;
   padding:15px;
-  border-radius:10px;
+  border-radius:12px;
   width:300px;
 }
 
-input,select{
+input{
   width:100%;
   padding:10px;
   margin-top:8px;
+  border-radius:10px;
+  border:none;
+  background:#0b1220;
+  color:white;
 }
 
-/* SAVE BUTTON PRO */
-.save-btn{
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  color: white;
-  border: none;
-  padding: 12px 22px;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  min-width: 140px;
-  box-shadow: 0 6px 15px rgba(37,99,235,0.35);
-  transition: all 0.2s ease;
-}
-
-/* SWITCH MODERNO */
-.switch{
-  position:relative;
-  display:inline-block;
-  width:50px;
-  height:28px;
-}
-
-.switch input{
-  opacity:0;
-  width:0;
-  height:0;
-}
-
-.slider{
-  position:absolute;
+.btn{
+  width:100%;
+  margin-top:10px;
+  padding:10px;
+  border:none;
+  border-radius:10px;
+  background:#2563eb;
+  color:white;
   cursor:pointer;
-  top:0; left:0; right:0; bottom:0;
-  background:#94a3b8;
-  transition:.3s;
-  border-radius:34px;
-}
-
-.slider:before{
-  position:absolute;
-  content:"";
-  height:20px;
-  width:20px;
-  left:4px;
-  bottom:4px;
-  background:white;
-  transition:.3s;
-  border-radius:50%;
-}
-
-.switch input:checked + .slider{
-  background:#22c55e;
-}
-
-.switch input:checked + .slider:before{
-  transform:translateX(22px);
 }
 
 </style>
@@ -186,120 +136,84 @@ input,select{
 <!-- TOP -->
 <div class="topbar">
   <button onclick="toggleMenu()">☰</button>
-  <button onclick="openSettings()">⚙️</button>
+  <div>📅 Calendario</div>
 </div>
 
-<!-- SIDEBAR -->
-<div class="sidebar" id="menu">
+<!-- MENU -->
+<div class="menu" id="menu">
 
-  <button onclick="closeMenu()">✕ cerrar</button>
+  <button onclick="alert('Inicio')">🏠 Iniciar</button>
+  <button onclick="showTasks()">📋 Tareas</button>
+  <button onclick="closeMenu()">❌ Cerrar</button>
 
-  <h3>🔊 Alarmas</h3>
-
-  <label class="switch">
-    <input type="checkbox" id="muteToggle" onchange="toggleMute()">
-    <span class="slider"></span>
-  </label>
-
-  <div style="font-size:12px;opacity:.7;margin-top:5px;">
-    ON = activadas / OFF = silenciadas
-  </div>
-
-  <h3 style="margin-top:15px;">🌗 Fondo calendario</h3>
-  <input type="range" min="0.5" max="1.2" step="0.1" onchange="setBg(this.value)">
-
-  <h3>📅 Brillo calendario</h3>
-  <input type="range" min="0.5" max="1" step="0.1" onchange="setCal(this.value)">
 </div>
 
 <!-- MAIN -->
 <div class="container">
 
-  <div class="header">
-    <button onclick="prev()">◀</button>
-    <h2 id="title"></h2>
-    <button onclick="next()">▶</button>
-  </div>
+  <h2 id="title"></h2>
 
   <div class="grid" id="cal"></div>
 
-  <div id="taskList"></div>
+  <h3>📋 Tareas</h3>
+  <div id="list"></div>
 
 </div>
 
-<!-- MODAL TASK -->
+<!-- MODAL -->
 <div class="modal" id="modal">
   <div class="box">
     <h3>Nueva tarea</h3>
-    <input id="name">
-    <button onclick="save()">Guardar</button>
-  </div>
-</div>
-
-<!-- SETTINGS -->
-<div class="modal" id="settings">
-  <div class="box">
-    <h3>Ajustes</h3>
-
-    <label>Días antes de aviso</label>
-    <select id="days">
-      <option value="1">1 día</option>
-      <option value="3">3 días</option>
-      <option value="7">7 días</option>
-    </select>
-
-    <div style="display:flex;justify-content:center;margin-top:15px;">
-      <button class="save-btn" onclick="saveSettings()">Guardar</button>
-    </div>
-
+    <input id="name" placeholder="Nombre">
+    <button class="btn" onclick="save()">Guardar</button>
   </div>
 </div>
 
 <script>
 
-/* DATA */
 let eventos = JSON.parse(localStorage.getItem("e")||"[]");
-let settings = JSON.parse(localStorage.getItem("s")||"{days:1}");
-let muted = JSON.parse(localStorage.getItem("muted")||"false");
-
 let date = new Date();
 let selected = null;
 
-/* INIT SWITCH */
-window.addEventListener("load", ()=>{
-  document.getElementById("muteToggle").checked = !muted;
-});
+/* MENU */
+function toggleMenu(){
+  document.getElementById("menu").classList.toggle("open");
+}
 
-/* RENDER */
+function closeMenu(){
+  document.getElementById("menu").classList.remove("open");
+}
+
+/* CALENDAR */
 function render(){
 
-  const cal=document.getElementById("cal");
+  const cal = document.getElementById("cal");
   cal.innerHTML="";
 
-  const y=date.getFullYear();
-  const m=date.getMonth();
+  let y=date.getFullYear();
+  let m=date.getMonth();
 
-  document.getElementById("title").innerText=
+  document.getElementById("title").innerText =
   date.toLocaleString("es",{month:"long",year:"numeric"});
 
-  const first=new Date(y,m,1).getDay();
-  const days=new Date(y,m+1,0).getDate();
+  let first = new Date(y,m,1).getDay();
+  let days = new Date(y,m+1,0).getDate();
 
   for(let i=0;i<first;i++) cal.innerHTML+="<div></div>";
 
-  for(let d=1;d<=days;d++){
+  for(let d=1; d<=days; d++){
 
-    let f=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    let f = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
 
-    let ev=eventos.filter(e=>e.fecha===f);
+    let ev = eventos.filter(e=>e.fecha===f);
 
-    let html=`<strong>${d}</strong>`;
+    let html = `<strong>${d}</strong>`;
 
     ev.forEach(e=>{
-      html+=`<span class="badge">${e.nombre}</span>`;
+      html += `<span class="badge">${e.nombre}</span>`;
     });
 
-    cal.innerHTML+=`
+    cal.innerHTML += `
       <div class="day" onclick="openTask('${f}')">
         ${html}
       </div>`;
@@ -311,20 +225,19 @@ function render(){
 /* LIST */
 function renderList(){
 
-  const list=document.getElementById("taskList");
+  let list = document.getElementById("list");
   list.innerHTML="";
 
   eventos.forEach((e,i)=>{
-    list.innerHTML+=`
+    list.innerHTML += `
       <div class="task">
         <div>
-          <b>${e.nombre}</b>
-          <div>${e.fecha}</div>
+          <b>${e.nombre}</b><br>
+          <small>${e.fecha}</small>
         </div>
         <button onclick="del(${i})">✕</button>
       </div>`;
   });
-
 }
 
 /* TASK */
@@ -335,8 +248,10 @@ function openTask(f){
 
 function save(){
   let n=document.getElementById("name").value;
+  if(!n||!selected) return;
 
   eventos.push({nombre:n,fecha:selected});
+
   localStorage.setItem("e",JSON.stringify(eventos));
 
   document.getElementById("modal").classList.remove("active");
@@ -351,50 +266,13 @@ function del(i){
   render();
 }
 
-/* MONTH */
-function next(){date.setMonth(date.getMonth()+1);render();}
-function prev(){date.setMonth(date.getMonth()-1);render();}
-
-/* MENU */
-function toggleMenu(){
-  document.getElementById("menu").classList.toggle("open");
+/* EXTRA */
+function showTasks(){
+  alert("Baja hasta la lista de tareas ↓");
 }
 
-function closeMenu(){
-  document.getElementById("menu").classList.remove("open");
-}
-
-/* SETTINGS */
-function openSettings(){
-  document.getElementById("settings").classList.add("active");
-}
-
-function saveSettings(){
-  settings.days=document.getElementById("days").value;
-  localStorage.setItem("s",JSON.stringify(settings));
-  document.getElementById("settings").classList.remove("active");
-}
-
-/* SWITCH LOGIC */
-function toggleMute(){
-  muted = !document.getElementById("muteToggle").checked;
-  localStorage.setItem("muted",JSON.stringify(muted));
-}
-
-/* SLIDERS */
-function setBg(v){
-  document.querySelectorAll(".day").forEach(d=>{
-    d.style.background=`rgba(17,24,39,${v})`;
-  });
-}
-
-function setCal(v){
-  document.querySelectorAll(".day").forEach(d=>{
-    d.style.opacity=v;
-  });
-}
-
-render();
+/* INIT */
+window.addEventListener("DOMContentLoaded",render);
 
 </script>
 
