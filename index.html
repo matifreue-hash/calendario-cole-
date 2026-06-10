@@ -14,7 +14,7 @@ body{
   display:flex;
 }
 
-/* MENU SIEMPRE VISIBLE */
+/* MENU */
 .menu{
   width:220px;
   height:100vh;
@@ -109,28 +109,66 @@ body{
   background:#111;
   padding:15px;
   border-radius:12px;
-  width:300px;
+  width:320px;
 }
 
-input,select{
+/* MODERN UI */
+.modern h3{
+  margin:0 0 12px 0;
+  font-size:18px;
+}
+
+.field{
+  margin-top:10px;
+}
+
+.field label{
+  font-size:12px;
+  opacity:0.7;
+}
+
+.field input{
   width:100%;
   padding:10px;
-  margin-top:8px;
+  margin-top:5px;
   border-radius:10px;
-  border:none;
+  border:1px solid #222;
   background:#0a0a0a;
   color:white;
 }
 
-.btn{
-  width:100%;
-  margin-top:10px;
-  padding:10px;
-  border:none;
+.time-wrap{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:#0a0a0a;
+  border:1px solid #222;
+  padding:8px;
   border-radius:10px;
-  background:#2563eb;
+  margin-top:5px;
+}
+
+.time-wrap input{
+  border:none;
+  background:transparent;
   color:white;
+  width:100%;
+}
+
+.btn-modern{
+  margin-top:15px;
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:12px;
+  background:linear-gradient(135deg,#2563eb,#1d4ed8);
+  color:white;
+  font-weight:700;
   cursor:pointer;
+}
+
+.btn-modern:hover{
+  transform:scale(1.02);
 }
 </style>
 </head>
@@ -153,8 +191,6 @@ input,select{
     <button onclick="prevMonth()">◀</button>
     <h3 id="title"></h3>
     <button onclick="nextMonth()">▶</button>
-
-    <button onclick="openAlarm()">🔔 Alarma</button>
   </div>
 
   <div class="grid" id="cal"></div>
@@ -164,49 +200,35 @@ input,select{
 
 </div>
 
-<!-- TASK -->
+<!-- MODAL TAREA -->
 <div class="modal" id="modal">
-  <div class="box">
-    <h3>Nueva tarea</h3>
-    <input id="name" placeholder="Nombre">
-    <input id="time" type="time">
-    <button class="btn" onclick="save()">Guardar</button>
-  </div>
-</div>
+  <div class="box modern">
 
-<!-- SETTINGS -->
-<div class="modal" id="settings">
-  <div class="box">
-    <h3>⚙ Ajustes</h3>
+    <h3>➕ Nueva tarea</h3>
 
-    <label>Notificar antes de evento</label>
-    <select id="before">
-      <option value="1">1 día</option>
-      <option value="3">3 días</option>
-      <option value="7">7 días</option>
-    </select>
+    <div class="field">
+      <label>Nombre</label>
+      <input id="name" placeholder="Ej: Examen de Matemática">
+    </div>
 
-    <button class="btn" onclick="saveSettings()">Guardar</button>
-  </div>
-</div>
+    <div class="field">
+      <label>⏰ Hora de alarma</label>
+      <div class="time-wrap">
+        <span>🕒</span>
+        <input id="time" type="time">
+      </div>
+    </div>
 
-<!-- ALARM -->
-<div class="modal" id="alarm">
-  <div class="box">
-    <h3>🔔 Alarma</h3>
-    <input type="time" id="alarmTime">
-    <button class="btn" onclick="setAlarm()">Activar</button>
+    <button class="btn-modern" onclick="save()">Guardar tarea</button>
+
   </div>
 </div>
 
 <script>
 
 let eventos = JSON.parse(localStorage.getItem("e")||"[]");
-let settings = JSON.parse(localStorage.getItem("s")||"{}");
-
 let date = new Date();
 let selected = null;
-let alarmTime = null;
 
 /* CALENDAR */
 function render(){
@@ -289,7 +311,15 @@ function save(){
   let n=document.getElementById("name").value;
   let t=document.getElementById("time").value;
 
-  eventos.push({nombre:n,fecha:selected,hora:t});
+  if(!n || !t) return;
+
+  eventos.push({
+    nombre:n,
+    fecha:selected,
+    hora:t,
+    notificado:false
+  });
+
   localStorage.setItem("e",JSON.stringify(eventos));
 
   document.getElementById("modal").classList.remove("active");
@@ -303,47 +333,36 @@ function del(i){
   render();
 }
 
-/* MONTH */
+/* NAV */
 function nextMonth(){date.setMonth(date.getMonth()+1);render();}
 function prevMonth(){date.setMonth(date.getMonth()-1);render();}
 function goHome(){date=new Date();render();}
 function scrollTasks(){document.getElementById("taskList").scrollIntoView({behavior:"smooth"});}
 
-/* SETTINGS */
-function openSettings(){
-  document.getElementById("settings").classList.add("active");
-}
-
-function saveSettings(){
-  settings.before=document.getElementById("before").value;
-  localStorage.setItem("s",JSON.stringify(settings));
-  document.getElementById("settings").classList.remove("active");
-}
-
-/* ALARM */
-function openAlarm(){
-  document.getElementById("alarm").classList.add("active");
-}
-
-function setAlarm(){
-  alarmTime=document.getElementById("alarmTime").value;
-  document.getElementById("alarm").classList.remove("active");
-}
-
-/* CHECK ALARM */
+/* 🔔 ALARMA SIMPLE */
 setInterval(()=>{
 
   let now=new Date();
   let h=String(now.getHours()).padStart(2,"0");
   let m=String(now.getMinutes()).padStart(2,"0");
 
-  if(alarmTime===`${h}:${m}`){
-    if(Notification.permission==="granted"){
-      new Notification("🔔 Alarma",{body:"Tarea programada"});
-    }
-  }
+  let today=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
 
-},60000);
+  eventos.forEach(e=>{
+
+    if(e.fecha===today && e.hora===`${h}:${m}` && !e.notificado){
+
+      if(Notification.permission==="granted"){
+        new Notification("🔔 Tarea",{body:e.nombre});
+      }
+
+      e.notificado=true;
+      localStorage.setItem("e",JSON.stringify(eventos));
+    }
+
+  });
+
+},30000);
 
 /* INIT */
 window.addEventListener("DOMContentLoaded",()=>{
